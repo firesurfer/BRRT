@@ -91,12 +91,13 @@ namespace BRRT
 			//True = left , Right = false
 			bool LeftOrRight = ShallInvertOrientation(256 / 2);
 			Left = LeftOrRight;
+			Left = true;
 			//Get Random value for the distance between or choosen point and the middle of the circle. 
 
 			double Distance = Randomizer.NextDouble() * MaximumCurveDistance + MinimumRadius;
 
 			//Angle should be somewhere between 0 and 360
-			double Angle = (Randomizer.NextDouble()) * 360;
+			double Angle = (Randomizer.NextDouble()) * 180;
 
 			//Angle to our middle point (orthogonal to orientation)
 			double AngleToMiddle = BaseNode.Orientation;
@@ -112,30 +113,51 @@ namespace BRRT
 			Console.WriteLine("Alpha: " + Angle);
 			Console.WriteLine("AngleToMiddle: " + AngleToMiddle);
 			Console.WriteLine("Distance: " + Distance);
+			Console.WriteLine ("BaseNode: " + BaseNode);
+
 			//Calculate center point
 			double MiddleX = BaseNode.Position.X + Math.Cos(AngleToMiddle * ToRadians) * Distance;
 			double MiddleY = BaseNode.Position.Y + Math.Sin(AngleToMiddle * ToRadians) * Distance;
 		
 
 			Point Middle = new Point((int)MiddleX, (int)MiddleY);
-			//Calculate new point
-			int	NewX = Middle.X + (int)((double)Distance * Math.Cos((Angle) * ToRadians));
-			int	NewY = Middle.Y + (int)((double)Distance * Math.Sin((Angle) * ToRadians));
+		
 			
-
+			double BaseAngle = 0;
 			//Angle of the start point in a polar coordinate system centered around the middle
-			double BaseAngle = Math.Acos(((double)BaseNode.Position.X - MiddleX) / Distance) * ToDegree;
+			if (BaseNode.Position.X != Middle.X) {
+				BaseAngle = Math.Acos (((double)BaseNode.Position.X - MiddleX) / Distance) * ToDegree;
+				if ((BaseNode.Position.X - MiddleX) / Distance >= 0.99)
+					BaseAngle = 180;
+				else if ((BaseNode.Position.X - MiddleX) / Distance <= -0.99)
+					BaseAngle = 0;
+			} else {
+				BaseAngle = Math.Asin (((double)BaseNode.Position.Y - MiddleY / Distance)) * ToDegree;
+				if ((BaseNode.Position.Y - MiddleY) / Distance >= 0.99)
+					BaseAngle = 90;
+				else if ((BaseNode.Position.Y - MiddleY) / Distance <= -0.99)
+					BaseAngle = -90;
+			}
+			BaseAngle = SanatizeAngle (BaseAngle);
 
-			if ((BaseNode.Position.X - MiddleX) / Distance == 1)
-				BaseAngle = 180;
-			else if ((BaseNode.Position.X - MiddleX) / Distance == -1)
-				BaseAngle = 0;
+			//Calculate new point
+			int	NewX = 0;
+			int	NewY = 0;
+			if (Left) {
+					NewX = Middle.X + (int)((double)Distance * Math.Cos ((BaseAngle+Angle) * ToRadians));
+					NewY = Middle.Y + (int)((double)Distance * Math.Sin ((BaseAngle+Angle) * ToRadians));
+			} else {
+					NewX = Middle.X + (int)((double)Distance * Math.Cos ((Angle) * ToRadians));
+					NewY = Middle.Y + (int)((double)Distance * Math.Sin ((Angle) * ToRadians));
+			}
+
+
 			Console.WriteLine("BaseAngle: " + BaseAngle);
 			//bool Inverted = (Angle < 0);
 			double NewOrientation = BaseNode.Orientation + (BaseAngle - Angle);
-
+			Console.WriteLine ("Orientation: " + NewOrientation);
 			_Distance = Distance;
-			_Angle = Angle;
+			_Angle = Angle + BaseAngle;
 			_Middle = Middle;
 			_BaseAngle = BaseAngle;
 			RRTNode Node = new RRTNode(new Point(NewX, NewY), NewOrientation, null);
@@ -233,7 +255,7 @@ namespace BRRT
 				}
 			}
 
-			for (int i = 0; i < 4; i++)
+			for (int i = 0; i < 10; i++)
 			{
 				if (!Base.Inverted)
 				{

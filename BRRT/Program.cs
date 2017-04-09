@@ -33,6 +33,8 @@ namespace BRRT
 					Bitmap BitMap = ImageHelpers.CreateNonIndexedImage( new Bitmap (MapPath));
 
 					Map MyMap = new Map (BitMap);
+					Point test = new Point (0, 0);
+
 					RRT Algorithm = new RRT(MyMap);
 					Algorithm.Finished += (object sender, EventArgs e) =>{
 						//Event that gets called when the RRT is finished

@@ -98,7 +98,7 @@ namespace BRRT
 		/// <param name="_Point">Point.</param>
 		public Point ToMapCoordinates(Point _Point)
 		{
-			return new Point (_Point.X + Width / 2, _Point.Y + Height / 2);
+			return new Point (_Point.X + Width / 2,( _Point.Y*-1 +Height / 2));
 		}
 		/// <summary>
 		/// From the map coordinates.
@@ -107,7 +107,7 @@ namespace BRRT
 		/// <param name="_Point">Point.</param>
 		public Point FromMapCoordinates(Point _Point)
 		{
-			return new Point (_Point.X - Width / 2, _Point.Y - Height / 2);
+			return new Point (_Point.X - Width / 2,( _Point.Y - Height / 2)*-1);
 		}
 		public void DrawPixelOnBitmap(Point _Point, Color col)
 		{

@@ -81,7 +81,7 @@ namespace BRRT
 		public RRT(Map _Map)
 		{
 			this.InternalMap = _Map;
-			this.Iterations = 1;
+			this.Iterations = 3;
 			this.MaximumDrift = 20;
 			this.StepWidth = 5;
 			this.MinumumRadius = 10;
@@ -128,7 +128,7 @@ namespace BRRT
 
 			//Second go curve
 			//Select new random node
-			RandomNode = RRTHelpers.SelectRandomNode(AllNodes);
+			//RandomNode = RRTHelpers.SelectRandomNode(AllNodes);
 
 			double Distance = 0;
 			double Angle = 0;
@@ -263,7 +263,7 @@ namespace BRRT
 			}
 			else
 			{
-				for (int x = (int)(BaseAngle)-StepWidth; x < Angle; x -= StepWidth)
+				for (int x = (int)(BaseAngle)-StepWidth; x > Angle; x -= StepWidth)
 				{
 					if (!CalculateNewPoint(x)) //Break if a not valid point was stepped into
 						break;
