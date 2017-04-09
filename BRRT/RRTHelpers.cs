@@ -6,26 +6,28 @@ namespace BRRT
 {
 	public static class RRTHelpers
 	{
-		static Random Randomizer = new Random ();
-	    const int MaximumDistance = 2000;
-		const double ToRadians = System.Math.PI/180 ;
+		static Random Randomizer = new Random(System.DateTime.Now.Second);
+		public const int MaximumDistance = 2000;
+		public const int MaximumCurveDistance = 200;
+		public const double ToRadians = System.Math.PI / 180;
+		public const double ToDegree = 180 / System.Math.PI;
 		/// <summary>
 		/// Re Seeds the Random class
 		/// </summary>
 		public static void ReSeedRandom()
 		{
-			Randomizer = new Random (System.DateTime.Now.Second);
+			Randomizer = new Random(System.DateTime.Now.Second);
 		}
 		/// <summary>
 		/// Selects a random node from the list of all nodes.
 		/// </summary>
 		/// <returns>The random node.</returns>
 		/// <param name="AllNodes">All nodes.</param>
-		public static RRTNode SelectRandomNode (List<RRTNode> AllNodes)
+		public static RRTNode SelectRandomNode(List<RRTNode> AllNodes)
 		{
 			int Max = AllNodes.Count;
-			int RandomIndex = Randomizer.Next (Max);
-			return AllNodes [RandomIndex];
+			int RandomIndex = Randomizer.Next(Max);
+			return AllNodes[RandomIndex];
 		}
 		/// <summary>
 		/// Ask for a random value if the orientation should be used inverted. 
@@ -34,7 +36,8 @@ namespace BRRT
 		/// <returns><c>true</c>, if orientation was inverted, <c>false</c> otherwise.</returns>
 		public static bool ShallInvertOrientation(int referenceValue)
 		{
-			if (Randomizer.Next (256) > referenceValue) {
+			if (Randomizer.Next(256) > referenceValue)
+			{
 				return true;
 			}
 			return false;
@@ -47,44 +50,115 @@ namespace BRRT
 		/// <param name="MaximumDrift">Maximum drift.</param>
 		public static RRTNode GetRandomStraightPoint(RRTNode BaseNode, double MaximumDrift)
 		{
-			double Distance = Randomizer.NextDouble () * MaximumDistance;
-			double Angle = (Randomizer.NextDouble () -0.5)*2 * MaximumDrift;
+			double Distance = Randomizer.NextDouble() * MaximumDistance;
+			double Angle = (Randomizer.NextDouble() - 0.5) * 2 * MaximumDrift;
 			double NewAngle;
 			double Orientation = BaseNode.Orientation;
 			bool Inverted;
-			if (ShallInvertOrientation (256 / 2)) {
-				NewAngle = InvertOrientation (BaseNode.Orientation) + Angle;
+			if (ShallInvertOrientation(256 / 2))
+			{
+				NewAngle = InvertOrientation(BaseNode.Orientation) + Angle;
 				Inverted = true;
-			} else {
+			}
+			else
+			{
 				NewAngle = BaseNode.Orientation + Angle;
 				Inverted = false;
 			}
 
-			int NewX = (int)(BaseNode.Position.X + (Distance * Math.Cos (NewAngle*ToRadians)));
-			int NewY = (int)(BaseNode.Position.Y + (Distance * Math.Sin (NewAngle*ToRadians)));
+			int NewX = (int)(BaseNode.Position.X + (Distance * Math.Cos(NewAngle * ToRadians)));
+			int NewY = (int)(BaseNode.Position.Y + (Distance * Math.Sin(NewAngle * ToRadians)));
 
-			Point NewPos = new Point (NewX, NewY);
-			RRTNode NewNode = new RRTNode (NewPos, Orientation, null);
+			Point NewPos = new Point(NewX, NewY);
+			RRTNode NewNode = new RRTNode(NewPos, Orientation, null);
 			NewNode.Inverted = Inverted;
 
 			return NewNode;
 
 		}
-		public static RRTNode GetRandomCurvePoint(RRTNode BaseNode, double MinimumRadius, ref Point MiddlePoint)
+		/// <summary>
+		/// Gets the random curve point.
+		/// </summary>
+		/// <returns>The random curve point.</returns>
+		/// <param name="BaseNode">Base node.</param>
+		/// <param name="MinimumRadius">Minimum radius.</param>
+		/// <param name="_Distance">Distance.</param>
+		/// <param name="_Angle">Angle.</param>
+		public static RRTNode GetRandomCurvePoint(RRTNode BaseNode, double MinimumRadius, ref double _Distance, ref double _Angle, ref double _BaseAngle, ref Point _Middle, ref bool Left)
 		{
-			Point Middle;
+
 			//Decide whether we want to have right or left turn
 			//True = left , Right = false
-			bool LeftOrRight = ShallInvertOrientation (256 / 2); 
-			double Distance = Randomizer.NextDouble () * MaximumDistance + MinimumRadius;
+			bool LeftOrRight = ShallInvertOrientation(256 / 2);
+			Left = LeftOrRight;
+			//Get Random value for the distance between or choosen point and the middle of the circle. 
+
+			double Distance = Randomizer.NextDouble() * MaximumCurveDistance + MinimumRadius;
+
 			//Angle should be somewhere between 0 and 360
-			double Angle = Randomizer.NextDouble() *360;
+			double Angle = (Randomizer.NextDouble()) * 360;
 
-			int NewX = (int)((double)BaseNode.Position.X * Math.Cos (Angle * ToRadians));
-			int NewY = (int)((double)BaseNode.Position.Y * Math.Sin (Angle * ToRadians));
+			//Angle to our middle point (orthogonal to orientation)
+			double AngleToMiddle = BaseNode.Orientation;
+			if (Left)
+				AngleToMiddle += 90;
+			else
+				AngleToMiddle -= 90;
+			AngleToMiddle = SanatizeAngle(AngleToMiddle);
 
 
-			return null;
+
+			Console.WriteLine("Left:" + Left);
+			Console.WriteLine("Alpha: " + Angle);
+			Console.WriteLine("AngleToMiddle: " + AngleToMiddle);
+			Console.WriteLine("Distance: " + Distance);
+			//Calculate center point
+			double MiddleX = BaseNode.Position.X + Math.Cos(AngleToMiddle * ToRadians) * Distance;
+			double MiddleY = BaseNode.Position.Y + Math.Sin(AngleToMiddle * ToRadians) * Distance;
+		
+
+			Point Middle = new Point((int)MiddleX, (int)MiddleY);
+			//Calculate new point
+			int	NewX = Middle.X + (int)((double)Distance * Math.Cos((Angle) * ToRadians));
+			int	NewY = Middle.Y + (int)((double)Distance * Math.Sin((Angle) * ToRadians));
+			
+
+			//Angle of the start point in a polar coordinate system centered around the middle
+			double BaseAngle = Math.Acos(((double)BaseNode.Position.X - MiddleX) / Distance) * ToDegree;
+
+			if ((BaseNode.Position.X - MiddleX) / Distance == 1)
+				BaseAngle = 180;
+			else if ((BaseNode.Position.X - MiddleX) / Distance == -1)
+				BaseAngle = 0;
+			Console.WriteLine("BaseAngle: " + BaseAngle);
+			//bool Inverted = (Angle < 0);
+			double NewOrientation = BaseNode.Orientation + (BaseAngle - Angle);
+
+			_Distance = Distance;
+			_Angle = Angle;
+			_Middle = Middle;
+			_BaseAngle = BaseAngle;
+			RRTNode Node = new RRTNode(new Point(NewX, NewY), NewOrientation, null);
+			//Node.Inverted = Inverted;
+			Console.WriteLine(Node);
+			return Node;
+
+
+
+
+		}
+		/// <summary>
+		/// Sanatizes the angle into a range between 0 and 360.
+		/// </summary>
+		/// <returns>The angle.</returns>
+		/// <param name="Angle">Angle.</param>
+		public static double SanatizeAngle(double Angle)
+		{
+			if (Angle < 0)
+				return 360.0 + Angle;
+			if (Angle > 360)
+				return Angle - 360.0;
+			return Angle;
 		}
 		/// <summary>
 		/// Inverts the orientation.
@@ -100,71 +174,82 @@ namespace BRRT
 		}
 		public static void DrawTree(RRTNode Base, Map _Map)
 		{
-			DrawImportantNode (Base,_Map,5,Color.Red);
+			DrawImportantNode(Base, _Map, 5, Color.Red);
 
 			Action<RRTNode> DrawAction = null;
-			DrawAction = (RRTNode node) => {
-				
+			DrawAction = (RRTNode node) =>
+			{
 
-				DrawImportantNode(node,_Map, 2, Color.Blue);
-				foreach (var item in node.Successors) {
+
+				DrawImportantNode(node, _Map, 2, Color.Blue);
+				foreach (var item in node.Successors)
+				{
 					Point position = _Map.ToMapCoordinates(node.Position);
 					Point sucPosition = _Map.ToMapCoordinates(item.Position);
-					double m = ((double)position.Y - (double)sucPosition.Y)/((double)position.X- (double)sucPosition.X);
+					double m = ((double)position.Y - (double)sucPosition.Y) / ((double)position.X - (double)sucPosition.X);
 					double b = (double)position.Y - m * (double)position.X;
 
-					if(position.X < sucPosition.X)
+					if (position.X < sucPosition.X)
 					{
-						for (int x = position.X; x < sucPosition.X; x++) {
-							double y = m*x +b;
-							_Map.DrawPixelOnBitmap(new Point(x,(int)y), Color.Black);
-							//_Map.DrawPixelOnBitmap(new Point(x+1,(int)y+1), Color.Black);
-						}
+						for (int x = position.X; x < sucPosition.X; x++)
+						{
+							double y = m * x + b;
+							_Map.DrawPixelOnBitmap(new Point(x, (int)y), Color.Black);
+						//_Map.DrawPixelOnBitmap(new Point(x+1,(int)y+1), Color.Black);
+					}
 					}
 					else
 					{
-						for (int x = position.X; x > sucPosition.X; x--) {
-							double y = m*x +b;
+						for (int x = position.X; x > sucPosition.X; x--)
+						{
+							double y = m * x + b;
 
-							_Map.DrawPixelOnBitmap(new Point(x,(int)y), Color.Black);
-							//_Map.DrawPixelOnBitmap(new Point(x+1,(int)y+1), Color.Black);
-						}
+							_Map.DrawPixelOnBitmap(new Point(x, (int)y), Color.Black);
+						//_Map.DrawPixelOnBitmap(new Point(x+1,(int)y+1), Color.Black);
+					}
 					}
 				}
 
 			};
-			StepThroughTree (Base,DrawAction);
+			StepThroughTree(Base, DrawAction);
 		}
 		private static void StepThroughTree(RRTNode Base, Action<RRTNode> _Action)
 		{
-			foreach (var item in Base.Successors) {
-				StepThroughTree (item, _Action);
-				_Action (item);
+			foreach (var item in Base.Successors)
+			{
+				StepThroughTree(item, _Action);
+				_Action(item);
 			}
 		}
-		public static void DrawImportantNode(RRTNode Base, Map _Map,int additional, Color col)
+		public static void DrawImportantNode(RRTNode Base, Map _Map, int additional, Color col)
 		{
 			Point position = _Map.ToMapCoordinates(Base.Position);
-			for (int x = position.X -additional;x < position.X+additional; x++) {
-				for (int y = position.Y-additional; y < position.Y+additional; y++) {
-					_Map.DrawPixelOnBitmap (new Point (x, y), col);
+			for (int x = position.X - additional; x < position.X + additional; x++)
+			{
+				for (int y = position.Y - additional; y < position.Y + additional; y++)
+				{
+					_Map.DrawPixelOnBitmap(new Point(x, y), col);
 
 				}
 			}
 
-			for (int i = 0; i < 4; i++) {
-				if (!Base.Inverted) {
+			for (int i = 0; i < 4; i++)
+			{
+				if (!Base.Inverted)
+				{
 					//Console.WriteLine (Base.Orientation);
-					Point MapPosition = _Map.ToMapCoordinates (Base.Position);
-					int x = MapPosition.X + (int)(i * Math.Cos (Base.Orientation * ToRadians));
-					int y = MapPosition.Y + (int)(i * Math.Sin (Base.Orientation * ToRadians));
-					_Map.DrawPixelOnBitmap (new Point(x,y), Color.DarkRed);
-
-				} else {
 					Point MapPosition = _Map.ToMapCoordinates(Base.Position);
-					int x = MapPosition.X + (int)(i * Math.Cos(InvertOrientation(Base.Orientation)*ToRadians));
-					int y = MapPosition.Y + (int)(i * Math.Sin (InvertOrientation(Base.Orientation)* ToRadians));
-					_Map.DrawPixelOnBitmap (new Point(x,y), Color.DarkRed);
+					int x = MapPosition.X + (int)(i * Math.Cos(Base.Orientation * ToRadians));
+					int y = MapPosition.Y + (int)(i * Math.Sin(Base.Orientation * ToRadians));
+					_Map.DrawPixelOnBitmap(new Point(x, y), Color.DarkRed);
+
+				}
+				else
+				{
+					Point MapPosition = _Map.ToMapCoordinates(Base.Position);
+					int x = MapPosition.X + (int)(i * Math.Cos(InvertOrientation(Base.Orientation) * ToRadians));
+					int y = MapPosition.Y + (int)(i * Math.Sin(InvertOrientation(Base.Orientation) * ToRadians));
+					_Map.DrawPixelOnBitmap(new Point(x, y), Color.DarkRed);
 				}
 			}
 		}
