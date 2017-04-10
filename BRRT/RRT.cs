@@ -74,6 +74,18 @@ namespace BRRT
 		/// </summary>
 		/// <value>The width of the step.</value>
 		public int StepWidth { get; set; }
+
+		/// <summary>
+		/// Gets or sets the target area. Search area around target.
+		/// </summary>
+		/// <value>The target area.</value>
+		public Rectangle TargetArea { get; set; }
+
+		/// <summary>
+		/// Gets or sets the acceptable orientation deviation from the target orientation.
+		/// </summary>
+		/// <value>The acceptable orientation deviation.</value>
+		public double AcceptableOrientationDeviation { get; set; }
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BRRT.RRT"/> class.
 		/// </summary>
@@ -81,10 +93,12 @@ namespace BRRT
 		public RRT(Map _Map)
 		{
 			this.InternalMap = _Map;
-			this.Iterations = 50;
+			this.Iterations = 50000;
 			this.MaximumDrift = 20;
 			this.StepWidth = 5;
 			this.MinumumRadius = 50;
+			this.TargetArea = new Rectangle(0, 0, 100, 100);
+			this.AcceptableOrientationDeviation = 20;
 		}
 
 		/// <summary>
@@ -210,6 +224,16 @@ namespace BRRT
 
 
 		}
+		/// <summary>
+		/// Steps to random node in a curve.
+		/// </summary>
+		/// <param name="Start">Start.</param>
+		/// <param name="End">End.</param>
+		/// <param name="Distance">Distance.</param>
+		/// <param name="Angle">Angle.</param>
+		/// <param name="BaseAngle">Base angle.</param>
+		/// <param name="Middle">Middle.</param>
+		/// <param name="Left">If set to <c>true</c> left.</param>
 		private void StepToNodeCurve(RRTNode Start, RRTNode End, double Distance, double Angle, double BaseAngle, Point Middle, bool Left)
 		{
 			RRTNode lastFoundNode = null;
@@ -281,6 +305,20 @@ namespace BRRT
 			return InternalMap.IsOccupied(_Point.X, _Point.Y);
 		}
 
+		public List<RRTNode> FindPathToTarget()
+		{
+			Rectangle TranslatedTargetArea = new Rectangle(EndPoint.X - TargetArea.Width / 2, EndPoint.Y - TargetArea.Height / 2, TargetArea.Width, TargetArea.Height);
+			List<RRTNode> NodesInTargetArea = new List<RRTNode>();
+			foreach (var item in AllNodes)
+			{
+				if (TranslatedTargetArea.Contains(item.Position))
+				{
+					NodesInTargetArea.Add(item);
+					Console.WriteLine("Found node in target area: " + item);
+				}
+			}
+			return null;
+		}
 	}
 }
 

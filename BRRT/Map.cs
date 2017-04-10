@@ -118,6 +118,14 @@ namespace BRRT
 
 			ImageMap.SetPixel (_Point.X, _Point.Y, col);
 		}
+		public void DrawLegend()
+		{
+			Graphics g = Graphics.FromImage(ImageMap);
+			g.DrawString("Blue : Step", new Font(FontFamily.GenericMonospace,15), Brushes.Blue, new RectangleF(10, 10, 1000, 20));
+			g.DrawString("Red  : Start", new Font(FontFamily.GenericMonospace,15), Brushes.Red, new RectangleF(10, 30, 1000, 20));
+			g.DrawString("RedArrow  : Orientation (forward)", new Font(FontFamily.GenericMonospace,15), Brushes.DarkRed, new RectangleF(10,50, 1000, 20));
+			g.DrawString("OliveArrow : Orientation (backwards)", new Font(FontFamily.GenericMonospace,15), Brushes.DarkOliveGreen, new RectangleF(10, 70, 1000, 20));
+		}
 
 
 	}

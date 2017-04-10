@@ -12,7 +12,7 @@ namespace BRRT
 		TreeView Tree = new TreeView();
 		Map myMap;
 		Point currentPointToDraw;
-		Point lastPointToDraw;
+
 		public MainForm()
 		{
 			this.WindowState = FormWindowState.Maximized;
@@ -33,7 +33,7 @@ namespace BRRT
 			{
 				RRTNode node = (RRTNode)e.Node.Tag;
 
-				lastPointToDraw = currentPointToDraw;
+
 				currentPointToDraw = myMap.ToMapCoordinates(node.Position);
 
 				Image img = (Image)myMap.ImageMap.Clone();

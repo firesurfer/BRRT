@@ -2,6 +2,8 @@
 using System.IO;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Diagnostics;
+using System.Collections.Generic;
 namespace BRRT
 {
 	public static class Program
@@ -36,30 +38,44 @@ namespace BRRT
 
 
 					RRT Algorithm = new RRT(MyMap);
-					Algorithm.Finished += (object sender, EventArgs e) =>{
-						//Event that gets called when the RRT is finished
+				Stopwatch watch = new Stopwatch();
 
+					Algorithm.Finished += (object sender, EventArgs e) =>{
+						watch.Stop();
+						Console.WriteLine("Algorithm took: " + watch.ElapsedMilliseconds + " ms");
+						//Event that gets called when the RRT is finished
+						Console.WriteLine("Finished");
+						watch.Reset();
+						watch.Start();
+						MyMap.DrawLegend();
 						//Draw the tree on the map
 						RRTHelpers.DrawTree(Algorithm.StartRRTNode, MyMap);
 						//Draw the endpoint
 						RRTHelpers.DrawImportantNode(Algorithm.EndRRTNode, MyMap,5, Color.Aqua);
+						watch.Stop();
+						Console.WriteLine("Drawing took: " + watch.ElapsedMilliseconds + " ms");
+						List<RRTNode> nodes = Algorithm.FindPathToTarget();
 						//Save the result
 						MyMap.SaveBitmapToFile("Result.bmp");
-						//Show the result in an Form
-						Application.EnableVisualStyles();
+						//Show the result in an Form (Can be used for debugging)
+						/*Application.EnableVisualStyles();
 						Application.SetCompatibleTextRenderingDefault(false);
 						MainForm frm = new MainForm();
 						frm.ShowImage(MyMap);
 
 						frm.CreateTree(Algorithm.StartRRTNode);
-						Console.WriteLine("Finished");
 						Application.Run(frm);
+						*/
+
 
 
 
 					};
 					//Start the RRT
+					watch.Start();
 					Algorithm.Start (StartPoint, StartOrientation, StopPoint, StopOrientation);
+
+
 					
 				}
 						
