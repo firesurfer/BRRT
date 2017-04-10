@@ -33,12 +33,12 @@ namespace BRRT
 					Bitmap BitMap = ImageHelpers.CreateNonIndexedImage( new Bitmap (MapPath));
 
 					Map MyMap = new Map (BitMap);
-					Point test = new Point (0, 0);
+
 
 					RRT Algorithm = new RRT(MyMap);
 					Algorithm.Finished += (object sender, EventArgs e) =>{
 						//Event that gets called when the RRT is finished
-						Console.WriteLine("Finished");
+
 						//Draw the tree on the map
 						RRTHelpers.DrawTree(Algorithm.StartRRTNode, MyMap);
 						//Draw the endpoint
@@ -49,7 +49,10 @@ namespace BRRT
 						Application.EnableVisualStyles();
 						Application.SetCompatibleTextRenderingDefault(false);
 						MainForm frm = new MainForm();
-						frm.ShowImage(MyMap.ImageMap);
+						frm.ShowImage(MyMap);
+
+						frm.CreateTree(Algorithm.StartRRTNode);
+						Console.WriteLine("Finished");
 						Application.Run(frm);
 
 

@@ -81,10 +81,10 @@ namespace BRRT
 		public RRT(Map _Map)
 		{
 			this.InternalMap = _Map;
-			this.Iterations = 3;
+			this.Iterations = 50;
 			this.MaximumDrift = 20;
 			this.StepWidth = 5;
-			this.MinumumRadius = 10;
+			this.MinumumRadius = 50;
 		}
 
 		/// <summary>
@@ -122,13 +122,13 @@ namespace BRRT
 			RRTNode RandomNode = RRTHelpers.SelectRandomNode(AllNodes);
 
 			//Get a new straight or drift random node
-			//RRTNode NewStraightNode = RRTHelpers.GetRandomStraightPoint(RandomNode, this.MaximumDrift);
+			RRTNode NewStraightNode = RRTHelpers.GetRandomStraightPoint(RandomNode, this.MaximumDrift);
 			//Now step to the new node
-			//StepToNodeStraight(RandomNode, NewStraightNode);
+			StepToNodeStraight(RandomNode, NewStraightNode);
 
 			//Second go curve
 			//Select new random node
-			//RandomNode = RRTHelpers.SelectRandomNode(AllNodes);
+			RandomNode = RRTHelpers.SelectRandomNode(AllNodes);
 
 			double Distance = 0;
 			double Angle = 0;
@@ -213,7 +213,7 @@ namespace BRRT
 		private void StepToNodeCurve(RRTNode Start, RRTNode End, double Distance, double Angle, double BaseAngle, Point Middle, bool Left)
 		{
 			RRTNode lastFoundNode = null;
-			RRTHelpers.DrawImportantNode(new RRTNode(Middle, 0,null), InternalMap, 5, Color.Coral);
+			//RRTHelpers.DrawImportantNode(new RRTNode(Middle, BaseAngle,null), InternalMap, 5, Color.Coral);
 
 			Func<int, bool> CalculateNewPoint = (int x) =>
 			{
@@ -224,7 +224,7 @@ namespace BRRT
 				int	NewY = Middle.Y + (int)((double)Distance* Math.Sin((x) * RRTHelpers.ToRadians));
 
 
-				double Orientation = Start.Orientation + (BaseAngle - x);
+				double Orientation = Start.Orientation - (BaseAngle - x);
 
 				Orientation = RRTHelpers.SanatizeAngle(Orientation);
 				if (PointValid(new Point((int)NewX, (int)NewY)))

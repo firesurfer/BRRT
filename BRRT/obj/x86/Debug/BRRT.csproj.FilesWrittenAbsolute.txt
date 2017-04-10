@@ -1,10 +1,3 @@
-/media/firesurfer/Volume/workspace/BRRT/BRRT/obj/x86/Debug/.NETFramework,Version=v4.5.AssemblyAttribute.cs
-/media/firesurfer/Volume/workspace/BRRT/BRRT/bin/Debug/BRRT.exe.mdb
-/media/firesurfer/Volume/workspace/BRRT/BRRT/bin/Debug/BRRT.exe
-/media/firesurfer/Volume/workspace/BRRT/BRRT/obj/x86/Debug/BRRT.exe
-/media/firesurfer/Volume/workspace/BRRT/BRRT/obj/x86/Debug/BRRT.exe.mdb
-/media/firesurfer/Volume/workspace/BRRT/BRRT/bin/Debug/MathNet.Numerics.dll
-/media/firesurfer/Volume/workspace/BRRT/BRRT/bin/Debug/System.Threading.dll
 /home/firesurfer/workspace/BRRT/BRRT/obj/x86/Debug/.NETFramework,Version=v4.5.AssemblyAttribute.cs
 /home/firesurfer/workspace/BRRT/BRRT/bin/Debug/BRRT.exe.mdb
 /home/firesurfer/workspace/BRRT/BRRT/bin/Debug/BRRT.exe

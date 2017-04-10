@@ -34,9 +34,9 @@ namespace BRRT
 		{
 			Successors.Add (Node);
 		}
-		public override string ToString ()
+		public override string ToString()
 		{
-			return string.Format ("[RRTNode: Position={0}, Orientation={1}, Predecessor={2}]", Position, Orientation, Predecessor);
+			return string.Format("[RRTNode: Position={0}, Orientation={1}, Inverted={2}]", Position, Orientation, Inverted);
 		}
 	}
 }

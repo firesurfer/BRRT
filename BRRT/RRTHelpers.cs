@@ -91,7 +91,7 @@ namespace BRRT
 			//True = left , Right = false
 			bool LeftOrRight = ShallInvertOrientation(256 / 2);
 			Left = LeftOrRight;
-			Left = true;
+
 			//Get Random value for the distance between or choosen point and the middle of the circle. 
 
 			double Distance = Randomizer.NextDouble() * MaximumCurveDistance + MinimumRadius;
@@ -113,56 +113,43 @@ namespace BRRT
 			Console.WriteLine("Alpha: " + Angle);
 			Console.WriteLine("AngleToMiddle: " + AngleToMiddle);
 			Console.WriteLine("Distance: " + Distance);
-			Console.WriteLine ("BaseNode: " + BaseNode);
+			Console.WriteLine("BaseNode: " + BaseNode);
 
 			//Calculate center point
 			double MiddleX = BaseNode.Position.X + Math.Cos(AngleToMiddle * ToRadians) * Distance;
 			double MiddleY = BaseNode.Position.Y + Math.Sin(AngleToMiddle * ToRadians) * Distance;
-		
+
 
 			Point Middle = new Point((int)MiddleX, (int)MiddleY);
-		
-			
+
+
 			double BaseAngle = 0;
-			//Angle of the start point in a polar coordinate system centered around the middle
-			if (BaseNode.Position.X != Middle.X) {
-				BaseAngle = Math.Acos (((double)BaseNode.Position.X - MiddleX) / Distance) * ToDegree;
-				if ((BaseNode.Position.X - MiddleX) / Distance >= 0.99)
-					BaseAngle = 180;
-				else if ((BaseNode.Position.X - MiddleX) / Distance <= -0.99)
-					BaseAngle = 0;
-			} else {
-				BaseAngle = Math.Asin (((double)BaseNode.Position.Y - MiddleY / Distance)) * ToDegree;
-				if ((BaseNode.Position.Y - MiddleY) / Distance >= 0.99)
-					BaseAngle = 90;
-				else if ((BaseNode.Position.Y - MiddleY) / Distance <= -0.99)
-					BaseAngle = -90;
-			}
-			BaseAngle = SanatizeAngle (BaseAngle);
+			BaseAngle = Math.Atan2(BaseNode.Position.Y - Middle.Y, BaseNode.Position.X - Middle.X)*ToDegree;
+			BaseAngle = SanatizeAngle(BaseAngle);
 
 			//Calculate new point
-			int	NewX = 0;
-			int	NewY = 0;
-			if (Left) {
-					NewX = Middle.X + (int)((double)Distance * Math.Cos ((BaseAngle+Angle) * ToRadians));
-					NewY = Middle.Y + (int)((double)Distance * Math.Sin ((BaseAngle+Angle) * ToRadians));
-			} else {
-					NewX = Middle.X + (int)((double)Distance * Math.Cos ((Angle) * ToRadians));
-					NewY = Middle.Y + (int)((double)Distance * Math.Sin ((Angle) * ToRadians));
-			}
+			int NewX = 0;
+			int NewY = 0;
+
+
+			NewX = Middle.X + (int)((double)Distance * Math.Cos((Angle) * ToRadians));
+			NewY = Middle.Y + (int)((double)Distance * Math.Sin((Angle) * ToRadians));
+			_Angle = Angle;
 
 
 			Console.WriteLine("BaseAngle: " + BaseAngle);
 			//bool Inverted = (Angle < 0);
-			double NewOrientation = BaseNode.Orientation + (BaseAngle - Angle);
-			Console.WriteLine ("Orientation: " + NewOrientation);
+			double NewOrientation = BaseNode.Orientation - (BaseAngle - Angle);
+			NewOrientation = SanatizeAngle(NewOrientation);
+			Console.WriteLine("Orientation: " + NewOrientation);
 			_Distance = Distance;
-			_Angle = Angle + BaseAngle;
+
 			_Middle = Middle;
 			_BaseAngle = BaseAngle;
 			RRTNode Node = new RRTNode(new Point(NewX, NewY), NewOrientation, null);
 			//Node.Inverted = Inverted;
 			Console.WriteLine(Node);
+			Console.WriteLine();
 			return Node;
 
 
@@ -208,28 +195,9 @@ namespace BRRT
 				{
 					Point position = _Map.ToMapCoordinates(node.Position);
 					Point sucPosition = _Map.ToMapCoordinates(item.Position);
-					double m = ((double)position.Y - (double)sucPosition.Y) / ((double)position.X - (double)sucPosition.X);
-					double b = (double)position.Y - m * (double)position.X;
+					Graphics g = Graphics.FromImage(_Map.ImageMap);
+					g.DrawLine(Pens.Black, position, sucPosition);
 
-					if (position.X < sucPosition.X)
-					{
-						for (int x = position.X; x < sucPosition.X; x++)
-						{
-							double y = m * x + b;
-							_Map.DrawPixelOnBitmap(new Point(x, (int)y), Color.Black);
-						//_Map.DrawPixelOnBitmap(new Point(x+1,(int)y+1), Color.Black);
-					}
-					}
-					else
-					{
-						for (int x = position.X; x > sucPosition.X; x--)
-						{
-							double y = m * x + b;
-
-							_Map.DrawPixelOnBitmap(new Point(x, (int)y), Color.Black);
-						//_Map.DrawPixelOnBitmap(new Point(x+1,(int)y+1), Color.Black);
-					}
-					}
 				}
 
 			};
@@ -251,7 +219,6 @@ namespace BRRT
 				for (int y = position.Y - additional; y < position.Y + additional; y++)
 				{
 					_Map.DrawPixelOnBitmap(new Point(x, y), col);
-
 				}
 			}
 
@@ -259,19 +226,17 @@ namespace BRRT
 			{
 				if (!Base.Inverted)
 				{
-					//Console.WriteLine (Base.Orientation);
-					Point MapPosition = _Map.ToMapCoordinates(Base.Position);
-					int x = MapPosition.X + (int)(i * Math.Cos(Base.Orientation * ToRadians));
-					int y = MapPosition.Y + (int)(i * Math.Sin(Base.Orientation * ToRadians));
-					_Map.DrawPixelOnBitmap(new Point(x, y), Color.DarkRed);
+
+					int x = Base.Position.X + (int)(i * Math.Cos(Base.Orientation * ToRadians));
+					int y = Base.Position.Y + (int)(i * Math.Sin(Base.Orientation * ToRadians));
+					_Map.DrawPixelOnBitmap(_Map.ToMapCoordinates(new Point(x, y)), Color.DarkRed);
 
 				}
 				else
 				{
-					Point MapPosition = _Map.ToMapCoordinates(Base.Position);
-					int x = MapPosition.X + (int)(i * Math.Cos(InvertOrientation(Base.Orientation) * ToRadians));
-					int y = MapPosition.Y + (int)(i * Math.Sin(InvertOrientation(Base.Orientation) * ToRadians));
-					_Map.DrawPixelOnBitmap(new Point(x, y), Color.DarkRed);
+					int x = Base.Position.X + (int)(i * Math.Cos(InvertOrientation(Base.Orientation) * ToRadians));
+					int y = Base.Position.Y + (int)(i * Math.Sin(InvertOrientation(Base.Orientation) * ToRadians));
+					_Map.DrawPixelOnBitmap(_Map.ToMapCoordinates(new Point(x, y)), Color.DarkRed);
 				}
 			}
 		}
