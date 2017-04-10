@@ -48,7 +48,7 @@ namespace BRRT
 		/// <returns>The random straight point.</returns>
 		/// <param name="BaseNode">Base node.</param>
 		/// <param name="MaximumDrift">Maximum drift.</param>
-		public static RRTNode GetRandomStraightPoint(RRTNode BaseNode, double MaximumDrift)
+		public static RRTNode GetRandomStraightPoint(RRTNode BaseNode, double MaximumDrift, int InvertProbability)
 		{
 			double Distance = Randomizer.NextDouble() * MaximumDistance;
 			double Angle = (Randomizer.NextDouble() - 0.5) * 2 * MaximumDrift;
@@ -56,7 +56,7 @@ namespace BRRT
 			double Orientation = BaseNode.Orientation;
 
 			//TODO Check invertion
-			bool Inverted = ShallInvertOrientation(256 / 2) ^ BaseNode.Inverted;
+			bool Inverted = ShallInvertOrientation(InvertProbability) ^ BaseNode.Inverted;
 
 			if ( Inverted)//& !BaseNode.Inverted)
 			{

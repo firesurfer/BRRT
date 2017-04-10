@@ -11,7 +11,7 @@ namespace BRRT
 		
 		public static int Main(string[] args)
 		{
-			if (args.Length > 2) {
+			if (args.Length > 3) {
 				//Parse arguments
 				//1. Path 2. Start 3. Stop
 				string MapPath = args [0];
@@ -20,6 +20,7 @@ namespace BRRT
 				string stop = args [2]; // x, y, phi
 				stop = stop.Trim();
 
+				string outputPath = args[3];
 				string[] startArray = start.Split (new char[]{ ',' });
 				string[] stopArray = stop.Split (new char[]{ ',' });
 				Point StartPoint = new Point (Convert.ToInt32 (startArray [0]), Convert.ToInt32 (startArray [1]));
@@ -59,7 +60,7 @@ namespace BRRT
 						List<RRTPath> nodes = Algorithm.FindPathToTarget();
 
 						//Save the result
-						MyMap.SaveBitmapToFile("Result.bmp");
+						MyMap.SaveBitmapToFile(outputPath);
 						//Show the result in an Form (Can be used for debugging)
 						/*Application.EnableVisualStyles();
 						Application.SetCompatibleTextRenderingDefault(false);

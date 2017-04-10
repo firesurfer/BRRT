@@ -77,6 +77,11 @@ namespace BRRT
 		public int StepWidth { get; set; }
 
 		/// <summary>
+		/// Gets or sets the width of the circle step.
+		/// </summary>
+		/// <value>The width of the circle step.</value>
+		public int CircleStepWidth { get; set; }
+		/// <summary>
 		/// Gets or sets the target area. Search area around target.
 		/// </summary>
 		/// <value>The target area.</value>
@@ -87,6 +92,18 @@ namespace BRRT
 		/// </summary>
 		/// <value>The acceptable orientation deviation.</value>
 		public double AcceptableOrientationDeviation { get; set; }
+
+		/// <summary>
+		/// Value between 0 and 256. A smaller value will prefer curves. A higher value will prefer straight lines.
+		/// </summary>
+		/// <value>The prefer straight.</value>
+		public int PreferStraight { get; set; }
+
+		/// <summary>
+		/// Value between 0 and 256. Smaller value will prefer forward. Higher value will prefer 
+		/// </summary>
+		/// <value>The straight invert probability.</value>
+		public int StraightInvertProbability { get; set; }
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BRRT.RRT"/> class.
 		/// </summary>
@@ -94,12 +111,15 @@ namespace BRRT
 		public RRT(Map _Map)
 		{
 			this.InternalMap = _Map;
-			this.Iterations = 1500;
+			this.Iterations = 240000;
 			this.MaximumDrift = 20;
-			this.StepWidth = 3;
-			this.MinumumRadius = 50;
-			this.TargetArea = new Rectangle(0, 0, 100, 100);
-			this.AcceptableOrientationDeviation = 28;
+			this.StepWidth = 5;
+			this.CircleStepWidth = 2;
+			this.MinumumRadius = 20;
+			this.TargetArea = new Rectangle(0, 0,20, 20);
+			this.AcceptableOrientationDeviation = 10;
+			this.PreferStraight = 150;
+			this.StraightInvertProbability = 125;
 		}
 
 		/// <summary>
@@ -136,27 +156,34 @@ namespace BRRT
 		/// </summary>
 		private void DoStep()
 		{
-			//First go straight
-			//Select a random base node from the list of all nodes
-			RRTNode RandomNode = RRTHelpers.SelectRandomNode(AllNodes);
+			bool Curve = RRTHelpers.ShallInvertOrientation(this.PreferStraight);
+			if (!Curve)
+			{
+				//First go straight
+				//Select a random base node from the list of all nodes
+				RRTNode RandomNode = RRTHelpers.SelectRandomNode(AllNodes);
 
-			//Get a new straight or drift random node
-			RRTNode NewStraightNode = RRTHelpers.GetRandomStraightPoint(RandomNode, this.MaximumDrift);
-			//Now step to the new node
-			StepToNodeStraight(RandomNode, NewStraightNode);
+				//Get a new straight or drift random node
+				RRTNode NewStraightNode = RRTHelpers.GetRandomStraightPoint(RandomNode, this.MaximumDrift, this.StraightInvertProbability);
+				//Now step to the new node
+				StepToNodeStraight(RandomNode, NewStraightNode);
 
-			//Second go curve
-			//Select new random node
-			RandomNode = RRTHelpers.SelectRandomNode(AllNodes);
+			}
+			else
+			{
+				//Second go curve
+				//Select new random node
+				RRTNode RandomNode = RRTHelpers.SelectRandomNode(AllNodes);
 
-			double Distance = 0;
-			double Angle = 0;
-			double BaseAngle = 0;
-			bool Left = false;
-			Point Middle = new Point();
-			RRTNode NewCurveNode = RRTHelpers.GetRandomCurvePoint(RandomNode, this.MinumumRadius, ref Distance, ref Angle, ref BaseAngle, ref Middle, ref Left);
-			//RRTHelpers.DrawImportantNode(NewCurveNode, InternalMap, 4, Color.CornflowerBlue);
-			StepToNodeCurve(RandomNode, NewCurveNode, Distance, Angle, BaseAngle, Middle, Left);
+				double Distance = 0;
+				double Angle = 0;
+				double BaseAngle = 0;
+				bool Left = false;
+				Point Middle = new Point();
+				RRTNode NewCurveNode = RRTHelpers.GetRandomCurvePoint(RandomNode, this.MinumumRadius, ref Distance, ref Angle, ref BaseAngle, ref Middle, ref Left);
+				//RRTHelpers.DrawImportantNode(NewCurveNode, InternalMap, 4, Color.CornflowerBlue);
+				StepToNodeCurve(RandomNode, NewCurveNode, Distance, Angle, BaseAngle, Middle, Left);
+			}
 		}
 		/// <summary>
 		/// Steps to node.
@@ -284,7 +311,7 @@ namespace BRRT
 
 			if (Left)
 			{
-				for (int x = (int)(BaseAngle) + StepWidth; x < Angle; x += StepWidth)
+				for (int x = (int)(BaseAngle) + CircleStepWidth; x < Angle; x += StepWidth)
 				{
 					if (!CalculateNewPoint(x)) //Break if a not valid point was stepped into
 						break;
@@ -292,7 +319,7 @@ namespace BRRT
 			}
 			else
 			{
-				for (int x = (int)(BaseAngle) - StepWidth; x > Angle; x -= StepWidth)
+				for (int x = (int)(BaseAngle) - CircleStepWidth; x > Angle; x -= StepWidth)
 				{
 					if (!CalculateNewPoint(x)) //Break if a not valid point was stepped into
 						break;
@@ -339,7 +366,7 @@ namespace BRRT
 				path.Start = item;
 				while (previous != null)
 				{
-					RRTHelpers.DrawImportantNode(previous, InternalMap, 2, Color.FromArgb(R, 50, B));
+					//RRTHelpers.DrawImportantNode(previous, InternalMap, 2, Color.FromArgb(R, 50, B));
 					if(previous.Predecessor != null)
 						length += Math.Sqrt(Math.Pow(previous.Position.X - previous.Predecessor.Position.X, 2) + Math.Pow(previous.Position.Y - previous.Predecessor.Position.Y, 2));
 					else
@@ -350,14 +377,15 @@ namespace BRRT
 				path.Color = Color.FromArgb(R, 50, B);
 				path.Length = length;
 				path.DistanceToEnd = RRTHelpers.CalculateDistance(path.Start, EndRRTNode);
+				path.OrientationDeviation = path.Start.Orientation - EndRRTNode.Orientation;
 				B += Step;
 				R -= Step;
 			}
 
-			List<RRTPath> SortedList = Paths.OrderBy(o => o.Length).ToList();
+			List<RRTPath> SortedList = Paths.OrderBy(o => o.Cost()).ToList();
 			foreach (var item in SortedList)
 			{
-				Console.WriteLine("Length for path " + item.Color.ToString() + " : " + item.Length + " Distance to End: " +item.DistanceToEnd);
+				Console.WriteLine("Length for path " + item.Color.ToString() + " : " + item.Length + " Distance to End: " +item.DistanceToEnd + " OrientationDif: " + item.OrientationDeviation);
 			}
 
 			if (SortedList.Count > 0)
