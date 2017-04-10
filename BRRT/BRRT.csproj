@@ -53,5 +53,6 @@
     <Compile Include="RRTHelpers.cs" />
     <Compile Include="ImageHelpers.cs" />
     <Compile Include="MainForm.cs" />
+    <Compile Include="Path.cs" />
   </ItemGroup>
 </Project>

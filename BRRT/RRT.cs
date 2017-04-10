@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Drawing;
 using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra;
@@ -93,12 +94,12 @@ namespace BRRT
 		public RRT(Map _Map)
 		{
 			this.InternalMap = _Map;
-			this.Iterations = 50000;
+			this.Iterations = 1500;
 			this.MaximumDrift = 20;
-			this.StepWidth = 5;
+			this.StepWidth = 3;
 			this.MinumumRadius = 50;
 			this.TargetArea = new Rectangle(0, 0, 100, 100);
-			this.AcceptableOrientationDeviation = 20;
+			this.AcceptableOrientationDeviation = 28;
 		}
 
 		/// <summary>
@@ -111,9 +112,13 @@ namespace BRRT
 		public void Start(Point _Start, double _StartOrientation, Point _End, double _EndOrientation)
 		{
 			this.StartPoint = InternalMap.FromMapCoordinates(_Start);
+			if (!PointValid(StartPoint))
+				throw new Exception("StartPoint in invalid region");
 			this.StartOrientation = _StartOrientation;
 			this.StartRRTNode = new RRTNode(StartPoint, StartOrientation, null);
 			this.EndPoint = InternalMap.FromMapCoordinates(_End);
+			if (!PointValid(EndPoint))
+				throw new Exception("EndPoint in invalid region");
 			this.EndOrientation = _EndOrientation;
 			this.EndRRTNode = new RRTNode(EndPoint, EndOrientation, null);
 
@@ -150,7 +155,7 @@ namespace BRRT
 			bool Left = false;
 			Point Middle = new Point();
 			RRTNode NewCurveNode = RRTHelpers.GetRandomCurvePoint(RandomNode, this.MinumumRadius, ref Distance, ref Angle, ref BaseAngle, ref Middle, ref Left);
-			RRTHelpers.DrawImportantNode(NewCurveNode, InternalMap, 4, Color.CornflowerBlue);
+			//RRTHelpers.DrawImportantNode(NewCurveNode, InternalMap, 4, Color.CornflowerBlue);
 			StepToNodeCurve(RandomNode, NewCurveNode, Distance, Angle, BaseAngle, Middle, Left);
 		}
 		/// <summary>
@@ -195,8 +200,8 @@ namespace BRRT
 						BetweenNode.Inverted = End.Inverted;
 						this.AllNodes.Add(BetweenNode);
 
-							//Console.WriteLine(BetweenNode.ToString());
-						}
+						//Console.WriteLine(BetweenNode.ToString());
+					}
 					return true;
 				}
 				else
@@ -241,11 +246,11 @@ namespace BRRT
 
 			Func<int, bool> CalculateNewPoint = (int x) =>
 			{
-				
+
 				//We interpret the random angle as the angle in a polar coordinate system
 
-				int	NewX = Middle.X + (int)((double)Distance* Math.Cos((x) * RRTHelpers.ToRadians));
-				int	NewY = Middle.Y + (int)((double)Distance* Math.Sin((x) * RRTHelpers.ToRadians));
+				int NewX = Middle.X + (int)((double)Distance * Math.Cos((x) * RRTHelpers.ToRadians));
+				int NewY = Middle.Y + (int)((double)Distance * Math.Sin((x) * RRTHelpers.ToRadians));
 
 
 				double Orientation = Start.Orientation - (BaseAngle - x);
@@ -279,7 +284,7 @@ namespace BRRT
 
 			if (Left)
 			{
-				for (int x = (int)(BaseAngle)+StepWidth; x<Angle; x += StepWidth)
+				for (int x = (int)(BaseAngle) + StepWidth; x < Angle; x += StepWidth)
 				{
 					if (!CalculateNewPoint(x)) //Break if a not valid point was stepped into
 						break;
@@ -287,7 +292,7 @@ namespace BRRT
 			}
 			else
 			{
-				for (int x = (int)(BaseAngle)-StepWidth; x > Angle; x -= StepWidth)
+				for (int x = (int)(BaseAngle) - StepWidth; x > Angle; x -= StepWidth)
 				{
 					if (!CalculateNewPoint(x)) //Break if a not valid point was stepped into
 						break;
@@ -305,19 +310,63 @@ namespace BRRT
 			return InternalMap.IsOccupied(_Point.X, _Point.Y);
 		}
 
-		public List<RRTNode> FindPathToTarget()
+		public List<RRTPath> FindPathToTarget()
 		{
 			Rectangle TranslatedTargetArea = new Rectangle(EndPoint.X - TargetArea.Width / 2, EndPoint.Y - TargetArea.Height / 2, TargetArea.Width, TargetArea.Height);
 			List<RRTNode> NodesInTargetArea = new List<RRTNode>();
+
+			List<RRTPath> Paths = new List<RRTPath>();
 			foreach (var item in AllNodes)
 			{
-				if (TranslatedTargetArea.Contains(item.Position))
+				
+				if (TranslatedTargetArea.Contains(item.Position) && Math.Abs(item.Orientation - EndRRTNode.Orientation) < AcceptableOrientationDeviation)
 				{
 					NodesInTargetArea.Add(item);
 					Console.WriteLine("Found node in target area: " + item);
+
 				}
 			}
-			return null;
+			if (NodesInTargetArea.Count == 0)
+				return Paths;
+			int B = 0;
+			int R = 255;
+			int Step = 255 / NodesInTargetArea.Count;
+			foreach (var item in NodesInTargetArea)
+			{
+				double length = 0;
+				RRTNode previous = item.Predecessor;
+				RRTPath path = new RRTPath();
+				path.Start = item;
+				while (previous != null)
+				{
+					RRTHelpers.DrawImportantNode(previous, InternalMap, 2, Color.FromArgb(R, 50, B));
+					if(previous.Predecessor != null)
+						length += Math.Sqrt(Math.Pow(previous.Position.X - previous.Predecessor.Position.X, 2) + Math.Pow(previous.Position.Y - previous.Predecessor.Position.Y, 2));
+					else
+						path.End = previous;
+					previous = previous.Predecessor;
+				}
+				Paths.Add(path);
+				path.Color = Color.FromArgb(R, 50, B);
+				path.Length = length;
+				path.DistanceToEnd = RRTHelpers.CalculateDistance(path.Start, EndRRTNode);
+				B += Step;
+				R -= Step;
+			}
+
+			List<RRTPath> SortedList = Paths.OrderBy(o => o.Length).ToList();
+			foreach (var item in SortedList)
+			{
+				Console.WriteLine("Length for path " + item.Color.ToString() + " : " + item.Length + " Distance to End: " +item.DistanceToEnd);
+			}
+
+			if (SortedList.Count > 0)
+			{
+				RRTPath shortestPath = SortedList[0];
+				RRTHelpers.DrawPath(shortestPath, InternalMap, Pens.Cyan);
+
+			}
+			return SortedList;
 		}
 	}
 }

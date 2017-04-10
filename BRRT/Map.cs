@@ -66,6 +66,7 @@ namespace BRRT
 		}
 		/// <summary>
 		/// Determines whether this map point is occupied the specified x y.
+		/// Or is outside the map.
 		/// </summary>
 		/// <returns><c>true</c> if this instance is occupied the specified x y; otherwise, <c>false</c>.</returns>
 		/// <param name="x">The x coordinate.</param>
@@ -79,7 +80,7 @@ namespace BRRT
 			if (MapKoords.X < 0 || MapKoords.Y < 0)
 				return true;
 			
-			if (MatrixMap [MapKoords.X, MapKoords.Y] != 0)
+			if (Math.Abs(MatrixMap [MapKoords.X, MapKoords.Y]) > 0.001)
 				return true;
 			return false;
 		}

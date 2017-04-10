@@ -7,8 +7,8 @@ namespace BRRT
 	public static class RRTHelpers
 	{
 		static Random Randomizer = new Random(System.DateTime.Now.Second);
-		public const int MaximumDistance = 2000;
-		public const int MaximumCurveDistance = 200;
+		public const int MaximumDistance = 400;
+		public const int MaximumCurveDistance = 300;
 		public const double ToRadians = System.Math.PI / 180;
 		public const double ToDegree = 180 / System.Math.PI;
 		/// <summary>
@@ -54,16 +54,19 @@ namespace BRRT
 			double Angle = (Randomizer.NextDouble() - 0.5) * 2 * MaximumDrift;
 			double NewAngle;
 			double Orientation = BaseNode.Orientation;
-			bool Inverted;
-			if (ShallInvertOrientation(256 / 2))
+
+			//TODO Check invertion
+			bool Inverted = ShallInvertOrientation(256 / 2) ^ BaseNode.Inverted;
+
+			if ( Inverted)//& !BaseNode.Inverted)
 			{
 				NewAngle = InvertOrientation(BaseNode.Orientation) + Angle;
-				Inverted = true;
+
 			}
 			else
 			{
 				NewAngle = BaseNode.Orientation + Angle;
-				Inverted = false;
+
 			}
 
 			int NewX = (int)(BaseNode.Position.X + (Distance * Math.Cos(NewAngle * ToRadians)));
@@ -96,10 +99,12 @@ namespace BRRT
 
 			double Distance = Randomizer.NextDouble() * MaximumCurveDistance + MinimumRadius;
 
-			//Angle should be somewhere between 0 and 360
-			double Angle = (Randomizer.NextDouble()-0.5) * 360*2;
-			bool Inverted = (Angle < 0);
-				
+			//Angle should be somewhere between -180 and 180
+			double Angle = (Randomizer.NextDouble()-0.5) * 360;
+			//When the angle is negativ we drive backwards. But if we are alread driving backwards -> drive forwards
+			//TODO check invertion
+			bool Inverted = (Angle < 0) ^ BaseNode.Inverted;
+
 			//Angle to our middle point (orthogonal to orientation)
 			double AngleToMiddle = BaseNode.Orientation;
 			if (Left)
@@ -212,6 +217,20 @@ namespace BRRT
 				_Action(item);
 			}
 		}
+		public static void DrawPath(RRTPath Path, Map _Map, Pen PathPen)
+		{
+			RRTNode previous = Path.Start;
+			Graphics g = Graphics.FromImage(_Map.ImageMap);
+			while (previous != null)
+			{
+				RRTHelpers.DrawImportantNode(previous, _Map, 2, Path.Color);
+				if (previous.Predecessor != null)
+				{
+					g.DrawLine(PathPen,_Map.ToMapCoordinates( previous.Position), _Map.ToMapCoordinates(previous.Predecessor.Position));
+				}
+				previous = previous.Predecessor;
+			}
+		}
 		public static void DrawImportantNode(RRTNode Base, Map _Map, int additional, Color col)
 		{
 			Point position = _Map.ToMapCoordinates(Base.Position);
@@ -240,6 +259,11 @@ namespace BRRT
 					_Map.DrawPixelOnBitmap(_Map.ToMapCoordinates(new Point(x, y)), Color.DarkOliveGreen);
 				}
 			}
+		}
+		public static double CalculateDistance(RRTNode a, RRTNode b)
+		{
+			return Math.Sqrt(Math.Pow(a.Position.X - b.Position.X, 2) + Math.Pow(a.Position.Y - b.Position.Y, 2));
+					
 		}
 	}
 

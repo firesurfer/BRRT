@@ -49,12 +49,15 @@ namespace BRRT
 						watch.Start();
 						MyMap.DrawLegend();
 						//Draw the tree on the map
-						RRTHelpers.DrawTree(Algorithm.StartRRTNode, MyMap);
-						//Draw the endpoint
+						//RRTHelpers.DrawTree(Algorithm.StartRRTNode, MyMap);
+
+						RRTHelpers.DrawImportantNode(Algorithm.StartRRTNode, MyMap,5, Color.Red);
+					//Draw the endpoint
 						RRTHelpers.DrawImportantNode(Algorithm.EndRRTNode, MyMap,5, Color.Aqua);
 						watch.Stop();
 						Console.WriteLine("Drawing took: " + watch.ElapsedMilliseconds + " ms");
-						List<RRTNode> nodes = Algorithm.FindPathToTarget();
+						List<RRTPath> nodes = Algorithm.FindPathToTarget();
+
 						//Save the result
 						MyMap.SaveBitmapToFile("Result.bmp");
 						//Show the result in an Form (Can be used for debugging)
