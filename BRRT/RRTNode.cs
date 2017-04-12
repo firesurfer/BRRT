@@ -38,6 +38,15 @@ namespace BRRT
 		{
 			return string.Format("[RRTNode: Position={0}, Orientation={1}, Inverted={2}]", Position, Orientation, Inverted);
 		}
+		/// <summary>
+		/// Clone this instance without copying predecessors and sucessors.
+		/// </summary>
+		public RRTNode Clone()
+		{
+			RRTNode temp = new RRTNode (this.Position, this.Orientation, null);
+			temp.Inverted = this.Inverted;
+			return temp;
+		}
 	}
 }
 

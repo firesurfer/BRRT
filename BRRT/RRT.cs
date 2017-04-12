@@ -111,14 +111,14 @@ namespace BRRT
 		public RRT(Map _Map)
 		{
 			this.InternalMap = _Map;
-			this.Iterations = 240000;
+			this.Iterations = 50000;
 			this.MaximumDrift = 20;
 			this.StepWidth = 5;
 			this.CircleStepWidth = 2;
 			this.MinumumRadius = 20;
 			this.TargetArea = new Rectangle(0, 0,20, 20);
 			this.AcceptableOrientationDeviation = 10;
-			this.PreferStraight = 150;
+			this.PreferStraight = 170;
 			this.StraightInvertProbability = 125;
 		}
 
@@ -362,20 +362,29 @@ namespace BRRT
 			{
 				double length = 0;
 				RRTNode previous = item.Predecessor;
-				RRTPath path = new RRTPath();
-				path.Start = item;
+
+
+				RRTNode end = null;
+
 				while (previous != null)
 				{
 					//RRTHelpers.DrawImportantNode(previous, InternalMap, 2, Color.FromArgb(R, 50, B));
-					if(previous.Predecessor != null)
-						length += Math.Sqrt(Math.Pow(previous.Position.X - previous.Predecessor.Position.X, 2) + Math.Pow(previous.Position.Y - previous.Predecessor.Position.Y, 2));
+					if (previous.Predecessor != null) {
+						length += Math.Sqrt (Math.Pow (previous.Position.X - previous.Predecessor.Position.X, 2) + Math.Pow (previous.Position.Y - previous.Predecessor.Position.Y, 2));
+						if (PointValid (previous.Position))
+							Console.WriteLine ("WTF");
+					}
 					else
-						path.End = previous;
+						end = previous;
+					
 					previous = previous.Predecessor;
+
+					//path.CountNodes++;
 				}
+				RRTPath path = new RRTPath(item,end);
 				Paths.Add(path);
 				path.Color = Color.FromArgb(R, 50, B);
-				path.Length = length;
+				//path.Length = length;
 				path.DistanceToEnd = RRTHelpers.CalculateDistance(path.Start, EndRRTNode);
 				path.OrientationDeviation = path.Start.Orientation - EndRRTNode.Orientation;
 				B += Step;
@@ -388,12 +397,7 @@ namespace BRRT
 				Console.WriteLine("Length for path " + item.Color.ToString() + " : " + item.Length + " Distance to End: " +item.DistanceToEnd + " OrientationDif: " + item.OrientationDeviation);
 			}
 
-			if (SortedList.Count > 0)
-			{
-				RRTPath shortestPath = SortedList[0];
-				RRTHelpers.DrawPath(shortestPath, InternalMap, Pens.Cyan);
 
-			}
 			return SortedList;
 		}
 	}

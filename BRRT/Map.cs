@@ -10,7 +10,8 @@ namespace BRRT
 		/// The map stored as int matrix. 255 -> is occupied, 0 is free
 		/// </summary>
 		/// <value>The matrix map.</value>
-		public Matrix<double> MatrixMap;
+		//public Matrix<double> MatrixMap;
+		public bool[,] MatrixMap{get;private set;}
 		/// <summary>
 		/// The map as an image.
 		/// </summary>
@@ -37,16 +38,17 @@ namespace BRRT
 			ImageMap = _Map;
 			Width = _Map.Width;
 			Height = _Map.Height;
-			MatrixMap = Matrix<double>.Build.Dense (Width, Height);
+			//MatrixMap = Matrix<double>.Build.Dense (Width, Height);
+			MatrixMap = new bool[Width,Height];
 			for (int x = 0; x < Width; x++) {
 				for (int y = 0; y < Height; y++) {
 					Color pixelColor = _Map.GetPixel (x, y);
 					//If the pixel indicates an obstacle it's black -> Set value in matrix to 255
 					//Else set the value to 0 -> It's free
 					if (pixelColor.R > 200 && pixelColor.B > 200 && pixelColor.G > 200) {
-						MatrixMap [x, y] = 255;
+						MatrixMap [x, y] = true;
 					} else {
-						MatrixMap [x, y] = 0;
+						MatrixMap [x, y] = false;
 					}
 
 				}
@@ -59,10 +61,10 @@ namespace BRRT
 		/// </summary>
 		/// <param name="x">The x coordinate.</param>
 		/// <param name="y">The y coordinate.</param>
-		public int Get(int x, int y)
+		public bool Get(int x, int y)
 		{
 			Point MapKoords = ToMapCoordinates (new Point (x, y));
-			return (int)MatrixMap [MapKoords.X, MapKoords.X];
+			return MatrixMap [MapKoords.X, MapKoords.Y];
 		}
 		/// <summary>
 		/// Determines whether this map point is occupied the specified x y.
@@ -79,10 +81,18 @@ namespace BRRT
 				return true;
 			if (MapKoords.X < 0 || MapKoords.Y < 0)
 				return true;
-			
-			if (Math.Abs(MatrixMap [MapKoords.X, MapKoords.Y]) > 0.001)
+
+			if (MatrixMap [MapKoords.X, MapKoords.Y])
 				return true;
 			return false;
+
+			//if (ImageMap.GetPixel (MapKoords.X, MapKoords.Y).B  >200 &&  ImageMap.GetPixel (MapKoords.X, MapKoords.Y).R > 200)
+			//	return true;
+			//return false;
+		}
+		public bool IsOccupied(Point p)
+		{
+			return IsOccupied (p.X, p.Y);
 		}
 		/// <summary>
 		/// Saves the bitmap to file.

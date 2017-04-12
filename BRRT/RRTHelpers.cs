@@ -260,12 +260,29 @@ namespace BRRT
 				}
 			}
 		}
+		/// <summary>
+		/// Calculates the distance between the two nodes.
+		/// </summary>
+		/// <returns>The distance.</returns>
+		/// <param name="a">The alpha component.</param>
+		/// <param name="b">The blue component.</param>
 		public static double CalculateDistance(RRTNode a, RRTNode b)
 		{
 			return Math.Sqrt(Math.Pow(a.Position.X - b.Position.X, 2) + Math.Pow(a.Position.Y - b.Position.Y, 2));
 					
 		}
+		/// <summary>
+		/// Calculates the angle from a to b. (a center of coordinate system)
+		/// </summary>
+		/// <returns>The angle.</returns>
+		/// <param name="a">The alpha component.</param>
+		/// <param name="b">The blue component.</param>
+		public static double CalculateAngle(RRTNode a, RRTNode b)
+		{
+			return Math.Atan2 (b.Position.Y - a.Position.Y, b.Position.X - a.Position.X);
+		}
 	}
+
 
 }
 

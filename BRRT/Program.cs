@@ -46,6 +46,32 @@ namespace BRRT
 						Console.WriteLine("Algorithm took: " + watch.ElapsedMilliseconds + " ms");
 						//Event that gets called when the RRT is finished
 						Console.WriteLine("Finished");
+
+						List<RRTPath> paths = Algorithm.FindPathToTarget();
+
+
+
+						if(paths.Count > 0)
+						{
+							
+							RRTPath shortestPath = RRTPath.CleanPath(paths[0]);
+							//RRTHelpers.DrawPath(paths[0],MyMap, Pens.AliceBlue);
+							//RRTHelpers.DrawPath(shortestPath, MyMap, Pens.Cyan);
+
+
+							//Ok optimize with the currently best path
+
+							PathOptimizer optimizer = new PathOptimizer(shortestPath, MyMap);
+							watch.Reset();
+							watch.Start();
+							optimizer.Optimize();
+							watch.Stop();
+							Console.WriteLine("Optimizing took: " + watch.ElapsedMilliseconds + " ms");
+							RRTHelpers.DrawPath(optimizer.Path, MyMap, Pens.DarkGoldenrod);
+						}
+						else
+							Console.WriteLine("No paths found");
+
 						watch.Reset();
 						watch.Start();
 						MyMap.DrawLegend();
@@ -53,11 +79,10 @@ namespace BRRT
 						//RRTHelpers.DrawTree(Algorithm.StartRRTNode, MyMap);
 
 						RRTHelpers.DrawImportantNode(Algorithm.StartRRTNode, MyMap,5, Color.Red);
-					//Draw the endpoint
+						//Draw the endpoint
 						RRTHelpers.DrawImportantNode(Algorithm.EndRRTNode, MyMap,5, Color.Aqua);
 						watch.Stop();
 						Console.WriteLine("Drawing took: " + watch.ElapsedMilliseconds + " ms");
-						List<RRTPath> nodes = Algorithm.FindPathToTarget();
 
 						//Save the result
 						MyMap.SaveBitmapToFile(outputPath);
