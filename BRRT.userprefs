@@ -1,20 +1,23 @@
 ﻿<Properties StartupConfiguration="{9E2CEEDA-1E9C-41FA-8B71-6A7E295CEF60}|Default" StartupItem="BRRT/BRRT.csproj">
-  <MonoDevelop.Ide.Workbench ActiveDocument="BRRT/RRT.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="BRRT/PathOptimizer.cs">
     <Files>
-      <File FileName="BRRT/Program.cs" Line="1" Column="1" />
-      <File FileName="BRRT/RRTNode.cs" Line="1" Column="1" />
-      <File FileName="BRRT/MainForm.cs" Line="1" Column="1" />
-      <File FileName="BRRT/RRTHelpers.cs" Line="1" Column="1" />
-      <File FileName="BRRT/Map.cs" Line="1" Column="1" />
-      <File FileName="BRRT/RRT.cs" Line="141" Column="1" />
-      <File FileName="BRRT/Path.cs" Line="1" Column="1" />
+      <File FileName="BRRT/Program.cs" Line="53" Column="7" />
+      <File FileName="BRRT/RRTNode.cs" Line="31" Column="17" />
+      <File FileName="BRRT/MainForm.cs" Line="88" Column="32" />
+      <File FileName="BRRT/RRTHelpers.cs" Line="228" Column="1" />
+      <File FileName="BRRT/RRTPath.cs" Line="22" Column="22" />
+      <File FileName="BRRT/PathOptimizer.cs" Line="37" Column="22" />
+      <File FileName="BRRT/RRT.cs" Line="114" Column="29" />
+      <File FileName="BRRT/Map.cs" Line="100" Column="71" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore />
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
-  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches>
+    <Watch file="BRRT/PathOptimizer.cs" line="112" offsetX="600" offsetY="1776" expression="node2" liveUpdate="False" />
+  </MonoDevelop.Ide.DebuggingService.PinnedWatches>
   <MultiItemStartupConfigurations />
   <MonoDevelop.Ide.ItemProperties.BRRT PreferredExecutionTarget="MonoDevelop.Default" />
 </Properties>

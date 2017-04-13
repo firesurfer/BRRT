@@ -55,22 +55,30 @@ namespace BRRT
 						{
 							
 							RRTPath shortestPath = RRTPath.CleanPath(paths[0]);
+							//Syncing maps:
+							//MyMap.SyncMapToImage();
+							//MyMap.SaveBitmapToFile("Test.bmp");
 							//RRTHelpers.DrawPath(paths[0],MyMap, Pens.AliceBlue);
-							//RRTHelpers.DrawPath(shortestPath, MyMap, Pens.Cyan);
+							shortestPath.Color = Color.Red;
+							RRTHelpers.DrawPath(shortestPath, MyMap, Pens.Cyan);
 
 
 							//Ok optimize with the currently best path
 
-							PathOptimizer optimizer = new PathOptimizer(shortestPath, MyMap);
+							PathOptimizer optimizer = new PathOptimizer(shortestPath, MyMap, Algorithm.EndRRTNode);
 							watch.Reset();
 							watch.Start();
 							optimizer.Optimize();
 							watch.Stop();
 							Console.WriteLine("Optimizing took: " + watch.ElapsedMilliseconds + " ms");
+							optimizer.Path.Color = Color.Blue;
 							RRTHelpers.DrawPath(optimizer.Path, MyMap, Pens.DarkGoldenrod);
 						}
 						else
+						{
 							Console.WriteLine("No paths found");
+
+						}
 
 						watch.Reset();
 						watch.Start();

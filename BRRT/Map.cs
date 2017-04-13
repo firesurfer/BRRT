@@ -45,7 +45,7 @@ namespace BRRT
 					Color pixelColor = _Map.GetPixel (x, y);
 					//If the pixel indicates an obstacle it's black -> Set value in matrix to 255
 					//Else set the value to 0 -> It's free
-					if (pixelColor.R > 200 && pixelColor.B > 200 && pixelColor.G > 200) {
+					if (pixelColor.R < 10 && pixelColor.B < 10 && pixelColor.G < 10) {
 						MatrixMap [x, y] = true;
 					} else {
 						MatrixMap [x, y] = false;
@@ -86,9 +86,6 @@ namespace BRRT
 				return true;
 			return false;
 
-			//if (ImageMap.GetPixel (MapKoords.X, MapKoords.Y).B  >200 &&  ImageMap.GetPixel (MapKoords.X, MapKoords.Y).R > 200)
-			//	return true;
-			//return false;
 		}
 		public bool IsOccupied(Point p)
 		{
@@ -100,7 +97,7 @@ namespace BRRT
 		/// <param name="FileName">File name.</param>
 		public void SaveBitmapToFile(string FileName)
 		{
-			this.ImageMap.Save (FileName,System.Drawing.Imaging.ImageFormat.Bmp);
+			this.ImageMap.Save (FileName,System.Drawing.Imaging.ImageFormat.Png);
 		}
 		/// <summary>
 		/// The map is starting in the upper left corner and is using positive values. We want to work in coordinates with {0,0} in the middle of the map.
@@ -136,6 +133,19 @@ namespace BRRT
 			g.DrawString("Red  : Start", new Font(FontFamily.GenericMonospace,15), Brushes.Red, new RectangleF(10, 30, 1000, 20));
 			g.DrawString("RedArrow  : Orientation (forward)", new Font(FontFamily.GenericMonospace,15), Brushes.DarkRed, new RectangleF(10,50, 1000, 20));
 			g.DrawString("OliveArrow : Orientation (backwards)", new Font(FontFamily.GenericMonospace,15), Brushes.DarkOliveGreen, new RectangleF(10, 70, 1000, 20));
+		}
+		public void SyncMapToImage()
+		{
+			for (int x = 0; x < Width; x++) {
+				for (int y = 0; y < Height; y++) {
+					
+					if (MatrixMap [x, y])
+						ImageMap.SetPixel (x, y, Color.Black);
+					else
+						ImageMap.SetPixel (x, y, Color.White);
+
+				}
+			}
 		}
 
 

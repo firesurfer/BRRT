@@ -111,12 +111,12 @@ namespace BRRT
 		public RRT(Map _Map)
 		{
 			this.InternalMap = _Map;
-			this.Iterations = 50000;
+			this.Iterations = 470000;
 			this.MaximumDrift = 20;
 			this.StepWidth = 5;
-			this.CircleStepWidth = 2;
+			this.CircleStepWidth = 1;
 			this.MinumumRadius = 20;
-			this.TargetArea = new Rectangle(0, 0,20, 20);
+			this.TargetArea = new Rectangle(0, 0,30, 30);
 			this.AcceptableOrientationDeviation = 10;
 			this.PreferStraight = 170;
 			this.StraightInvertProbability = 125;
@@ -132,12 +132,12 @@ namespace BRRT
 		public void Start(Point _Start, double _StartOrientation, Point _End, double _EndOrientation)
 		{
 			this.StartPoint = InternalMap.FromMapCoordinates(_Start);
-			if (!PointValid(StartPoint))
+			if (PointValid(StartPoint))
 				throw new Exception("StartPoint in invalid region");
 			this.StartOrientation = _StartOrientation;
 			this.StartRRTNode = new RRTNode(StartPoint, StartOrientation, null);
 			this.EndPoint = InternalMap.FromMapCoordinates(_End);
-			if (!PointValid(EndPoint))
+			if (PointValid(EndPoint))
 				throw new Exception("EndPoint in invalid region");
 			this.EndOrientation = _EndOrientation;
 			this.EndRRTNode = new RRTNode(EndPoint, EndOrientation, null);
@@ -157,11 +157,26 @@ namespace BRRT
 		private void DoStep()
 		{
 			bool Curve = RRTHelpers.ShallInvertOrientation(this.PreferStraight);
+			//Select a random base node from the list of all nodes
+			RRTNode RandomNode = RRTHelpers.SelectRandomNode(AllNodes);
+
+			bool SelectNearest = RRTHelpers.ShallInvertOrientation (250);
+			if (SelectNearest) {
+				//Take from 100 nodes the node that is the nearest to the endpoint
+				double bestDistance = RRTHelpers.CalculateDistance (RandomNode, EndRRTNode);
+				for (int i = 0; i < 10; i++) {
+					RRTNode NewNode = RRTHelpers.SelectRandomNode (AllNodes);
+					double distance = RRTHelpers.CalculateDistance (NewNode, EndRRTNode);
+					if (distance < bestDistance) {
+						bestDistance = distance;
+						RandomNode = NewNode;
+					}
+				}
+			}
 			if (!Curve)
 			{
 				//First go straight
-				//Select a random base node from the list of all nodes
-				RRTNode RandomNode = RRTHelpers.SelectRandomNode(AllNodes);
+
 
 				//Get a new straight or drift random node
 				RRTNode NewStraightNode = RRTHelpers.GetRandomStraightPoint(RandomNode, this.MaximumDrift, this.StraightInvertProbability);
@@ -172,8 +187,7 @@ namespace BRRT
 			else
 			{
 				//Second go curve
-				//Select new random node
-				RRTNode RandomNode = RRTHelpers.SelectRandomNode(AllNodes);
+
 
 				double Distance = 0;
 				double Angle = 0;
@@ -207,7 +221,7 @@ namespace BRRT
 			Func<int, bool> CalculateNewPoint = (int x) =>
 			{
 				double y = m * x + b;
-				if (PointValid(new Point((int)x, (int)y)))
+				if (!PointValid(new Point((int)x, (int)y)))
 				{
 					if (lastFoundNode == null)
 					{
@@ -283,7 +297,7 @@ namespace BRRT
 				double Orientation = Start.Orientation - (BaseAngle - x);
 
 				Orientation = RRTHelpers.SanatizeAngle(Orientation);
-				if (PointValid(new Point((int)NewX, (int)NewY)))
+				if (!PointValid(new Point((int)NewX, (int)NewY)))
 				{
 					if (lastFoundNode == null)
 					{
