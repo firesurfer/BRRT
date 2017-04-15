@@ -91,9 +91,11 @@ namespace BRRT
 						RRTHelpers.DrawImportantNode(Algorithm.EndRRTNode, MyMap,5, Color.Aqua);
 						watch.Stop();
 						Console.WriteLine("Drawing took: " + watch.ElapsedMilliseconds + " ms");
+						if (paths.Count >0) {
+							//Save the result
+							MyMap.SaveBitmapToFile(outputPath);
+						}
 
-						//Save the result
-						MyMap.SaveBitmapToFile(outputPath);
 						//Show the result in an Form (Can be used for debugging)
 						/*Application.EnableVisualStyles();
 						Application.SetCompatibleTextRenderingDefault(false);

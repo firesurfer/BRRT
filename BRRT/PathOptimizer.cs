@@ -20,7 +20,7 @@ namespace BRRT
 			this.InternalMap = _Map;
 
 			this.Path = _Path;
-			this.Iterations = 100000;
+			this.Iterations = 50000;
 			this.MaximumDriftAngle = 20;
 			this.MinimumRadius = 20;
 			this.AllowedOrientationDeviation = 1;
@@ -34,10 +34,11 @@ namespace BRRT
 		}
 		public void Optimize()
 		{
-			for (int i = 0; i < 100; i++) {
-				OptimizeForEndPoint ();
-				OptimizeStraight ();
-			}
+			
+			OptimizeForEndPoint ();
+			OptimizeStraight ();
+			OptimizeForEndPoint ();
+
 		
 		
 			//

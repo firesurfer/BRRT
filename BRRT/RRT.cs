@@ -104,6 +104,12 @@ namespace BRRT
 		/// </summary>
 		/// <value>The straight invert probability.</value>
 		public int StraightInvertProbability { get; set; }
+
+		/// <summary>
+		/// Gets the progress.
+		/// </summary>
+		/// <value>The progress.</value>
+		public int Progress { get; private set; }
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BRRT.RRT"/> class.
 		/// </summary>
@@ -111,14 +117,14 @@ namespace BRRT
 		public RRT(Map _Map)
 		{
 			this.InternalMap = _Map;
-			this.Iterations = 470000;
+			this.Iterations = 70000;
 			this.MaximumDrift = 20;
 			this.StepWidth = 5;
-			this.CircleStepWidth = 1;
+			this.CircleStepWidth = 5;
 			this.MinumumRadius = 20;
-			this.TargetArea = new Rectangle(0, 0,30, 30);
-			this.AcceptableOrientationDeviation = 10;
-			this.PreferStraight = 170;
+			this.TargetArea = new Rectangle(0, 0,50, 50);
+			this.AcceptableOrientationDeviation = 4;
+			this.PreferStraight = 175;
 			this.StraightInvertProbability = 125;
 		}
 
@@ -144,9 +150,18 @@ namespace BRRT
 
 			this.AllNodes.Add(StartRRTNode);
 			//Do n iterations of the algorithm
+			double PreviousProgress = 0;
+			Console.WriteLine ();
 			for (UInt32 it = 0; it < Iterations; it++)
 			{
+				
 				DoStep();
+
+				Progress = (int)(Math.Round(((double)it / (double)Iterations)*100));
+				if (Progress != PreviousProgress) {
+					PreviousProgress = Progress;
+					PrintProgress ();
+				}
 			}
 			if (Finished != null)
 				Finished(this, new EventArgs());
@@ -160,7 +175,8 @@ namespace BRRT
 			//Select a random base node from the list of all nodes
 			RRTNode RandomNode = RRTHelpers.SelectRandomNode(AllNodes);
 
-			bool SelectNearest = RRTHelpers.ShallInvertOrientation (250);
+			//Produces very strange results sometimes
+			bool SelectNearest = RRTHelpers.ShallInvertOrientation (125);
 			if (SelectNearest) {
 				//Take from 100 nodes the node that is the nearest to the endpoint
 				double bestDistance = RRTHelpers.CalculateDistance (RandomNode, EndRRTNode);
@@ -285,7 +301,7 @@ namespace BRRT
 			RRTNode lastFoundNode = null;
 			//RRTHelpers.DrawImportantNode(new RRTNode(Middle, BaseAngle,null), InternalMap, 5, Color.Coral);
 
-			Func<int, bool> CalculateNewPoint = (int x) =>
+			Func<double, bool> CalculateNewPoint = (double x) =>
 			{
 
 				//We interpret the random angle as the angle in a polar coordinate system
@@ -323,9 +339,10 @@ namespace BRRT
 					return false;
 			};
 
+			double AdaptedStepWidth = (CircleStepWidth * 360.0 )/ (2 * Math.PI * Distance);
 			if (Left)
 			{
-				for (int x = (int)(BaseAngle) + CircleStepWidth; x < Angle; x += StepWidth)
+				for (double x = (BaseAngle) + AdaptedStepWidth; x < Angle; x += AdaptedStepWidth)
 				{
 					if (!CalculateNewPoint(x)) //Break if a not valid point was stepped into
 						break;
@@ -333,7 +350,7 @@ namespace BRRT
 			}
 			else
 			{
-				for (int x = (int)(BaseAngle) - CircleStepWidth; x > Angle; x -= StepWidth)
+				for (double x = (BaseAngle) - AdaptedStepWidth; x > Angle; x -= AdaptedStepWidth)
 				{
 					if (!CalculateNewPoint(x)) //Break if a not valid point was stepped into
 						break;
@@ -413,6 +430,13 @@ namespace BRRT
 
 
 			return SortedList;
+		}
+		void PrintProgress()
+		{
+			Console.SetCursorPosition (0, Console.CursorTop-1);
+
+			Console.WriteLine ("Progress: " + Progress + "%");
+
 		}
 	}
 }
