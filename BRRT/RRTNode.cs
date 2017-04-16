@@ -28,6 +28,9 @@ namespace BRRT
 			this.Predecessor = _Predecessor;
 			this.Successors = new List<RRTNode> ();
 		}
+		/// <summary>
+		/// Need for serialization.
+		/// </summary>
 		public RRTNode()
 		{
 
@@ -40,6 +43,10 @@ namespace BRRT
 		{
 			Successors.Add (Node);
 		}
+		/// <summary>
+		/// Returns a <see cref="System.String"/> that represents the current <see cref="BRRT.RRTNode"/>.
+		/// </summary>
+		/// <returns>A <see cref="System.String"/> that represents the current <see cref="BRRT.RRTNode"/>.</returns>
 		public override string ToString()
 		{
 			return string.Format("[RRTNode: Position={0}, Orientation={1}, Inverted={2}]", Position, Orientation, Inverted);

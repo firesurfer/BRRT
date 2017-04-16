@@ -11,11 +11,12 @@ namespace BRRT
 		
 		public static int Main(string[] args)
 		{
+			//Stopwatch for getting the total execution time
 			Stopwatch totalTimeWatch = new Stopwatch ();
 			totalTimeWatch.Start ();
 			if (args.Length > 3) {
 				//Parse arguments
-				//1. Path 2. Start 3. Stop
+				//1. Path 2. Start 3. Stop 4. Output path 5. path to xml document with path (optional)
 				string MapPath = args [0];
 				string start = args [1]; //x,y,phi
 				start = start.Trim();
@@ -25,6 +26,7 @@ namespace BRRT
 				string outputPath = args[3];
 				string[] startArray = start.Split (new char[]{ ',' });
 				string[] stopArray = stop.Split (new char[]{ ',' });
+
 				Point StartPoint = new Point (Convert.ToInt32 (startArray [0]), Convert.ToInt32 (startArray [1]));
 				double StartOrientation = Convert.ToDouble (startArray [2]);
 
@@ -33,22 +35,29 @@ namespace BRRT
 
 				Console.WriteLine ("Start is: " + StartPoint.ToString () + " , " + StartOrientation);
 				Console.WriteLine ("Stop is: " + StopPoint.ToString () + " , " + StopOrientation);
+
+				//Check if a path for the xml document was given.
 				string pathXml = "";
 				if (args.Length > 4) {
 					pathXml = args [4];
 					Console.WriteLine ("Saving path to: " + pathXml);
 				}
-
+				//In case the map exists
 				if (File.Exists (MapPath)) {
+					//Load bitmap 
 					Bitmap BitMap = ImageHelpers.CreateNonIndexedImage( new Bitmap (MapPath));
 
+					//Create new map from bitmap
 					Map MyMap = new Map (BitMap);
 
-
+					//Create new instance of algorithm
 					RRT Algorithm = new RRT(MyMap);
+					//Stopwatch for timing
 					Stopwatch watch = new Stopwatch();
 
+					//Callback (lambda function) when the rrt algorithm has finished
 					Algorithm.Finished += (object sender, EventArgs e) =>{
+						//Stop timing stopwatch
 						watch.Stop();
 						Console.WriteLine("Algorithm took: " + watch.ElapsedMilliseconds + " ms");
 						//Event that gets called when the RRT is finished
@@ -57,10 +66,13 @@ namespace BRRT
 						//Look for paths from the endpoint to the start
 						List<RRTPath> paths = Algorithm.FindPathToTarget();
 
-
+						//In case we found a path
 						if(paths.Count > 0)
 						{
 
+
+							//ATTENTION: Path.Start is the point next to given EndPoint
+							//			 Path.End is the StartPoint
 							//Clean the path (Remove all branches in the tree we dont want to follow)
 							RRTPath shortestPath = RRTPath.CleanPath(paths[0]);
 							shortestPath.Color = Color.Red;
@@ -70,9 +82,12 @@ namespace BRRT
 
 							//Ok optimize with the currently best path
 							Console.WriteLine("Starting Optimization");
+
+							//Create new instance of optimizer
 							PathOptimizer optimizer = new PathOptimizer(shortestPath, MyMap, Algorithm.EndRRTNode);
 							watch.Reset();
 							watch.Start();
+							//Optimize the path
 							optimizer.Optimize();
 							watch.Stop();
 

@@ -6,6 +6,7 @@ using System.Drawing;
 
 namespace BRRT
 {
+	
 	public class RRT
 	{
 		/// <summary>
@@ -121,7 +122,7 @@ namespace BRRT
 			this.MinumumRadius = 20;
 			this.TargetArea = new Rectangle(0, 0,50, 50);
 			this.AcceptableOrientationDeviation = 4;
-			this.PreferStraight = 175;
+			this.PreferStraight = 160;
 			this.StraightInvertProbability = 125;
 		}
 
@@ -152,9 +153,7 @@ namespace BRRT
 			Console.WriteLine ();
 			for (UInt32 it = 0; it < Iterations; it++)
 			{
-				
 				DoStep();
-
 				Progress = (int)(Math.Round(((double)it / (double)Iterations)*100));
 				if (Progress != PreviousProgress) {
 					PreviousProgress = Progress;
@@ -170,8 +169,7 @@ namespace BRRT
 			double Distance = 1000;
 
 			for (int offset = (int)-MaximumDrift; offset < (int)MaximumDrift; offset++) {
-				
-			
+
 				RRTNode lastFound = null;
 				for (int i = 0; i < Distance; i = i + StepWidth) {
 					int NewX = StartRRTNode.Position.X + (int)((double)i * Math.Cos ((StartRRTNode.Orientation + offset) * RRTHelpers.ToRadians));
@@ -223,14 +221,14 @@ namespace BRRT
 		/// </summary>
 		private void DoStep()
 		{
-			bool Curve = RRTHelpers.ShallInvertOrientation(this.PreferStraight);
+			bool Curve = RRTHelpers.BooleanRandom(this.PreferStraight);
 			//Select a random base node from the list of all nodes
 			RRTNode RandomNode = RRTHelpers.SelectRandomNode(AllNodes);
 
-			//Produces very strange results sometimes
-			bool SelectNearest = RRTHelpers.ShallInvertOrientation (100);
+			//large value -> don' take nearest so often
+			bool SelectNearest = RRTHelpers.BooleanRandom (150);
 			if (SelectNearest) {
-				//Take from 100 nodes the node that is the nearest to the endpoint
+				//Take from 10 nodes the node that is the nearest to the endpoint
 				double bestDistance = RRTHelpers.CalculateDistance (RandomNode, EndRRTNode);
 				for (int i = 0; i < 10; i++) {
 					RRTNode NewNode = RRTHelpers.SelectRandomNode (AllNodes);
@@ -244,19 +242,14 @@ namespace BRRT
 			if (!Curve)
 			{
 				//First go straight
-
-
 				//Get a new straight or drift random node
 				RRTNode NewStraightNode = RRTHelpers.GetRandomStraightPoint(RandomNode, this.MaximumDrift, this.StraightInvertProbability);
 				//Now step to the new node
 				StepToNodeStraight(RandomNode, NewStraightNode);
-
 			}
 			else
 			{
 				//Second go curve
-
-
 				double Distance = 0;
 				double Angle = 0;
 				double BaseAngle = 0;
@@ -276,10 +269,10 @@ namespace BRRT
 		/// <param name="End">End.</param>
 		private void StepToNodeStraight(RRTNode Start, RRTNode End)
 		{
-
-			//Linear equation between points: y = mx +b
-			double m = ((double)Start.Position.Y - (double)End.Position.Y) / ((double)Start.Position.X - (double)End.Position.X);
-			double b = (double)Start.Position.Y - m * (double)Start.Position.X;
+			double distance = RRTHelpers.CalculateDistance (Start, End);
+			double angle = RRTHelpers.CalculateAngle (Start, End);
+			double cosArgument = Math.Cos (angle);
+			double sinArgument = Math.Sin (angle);
 			RRTNode lastFoundNode = null;
 
 			//Lambda function that calculates a new point from a given x value
@@ -288,28 +281,25 @@ namespace BRRT
 			//Returns false if point not valid 
 			Func<double, bool> CalculateNewPoint = (double x) =>
 			{
-				double y = m * x + b;
-				if (!PointValid(new Point((int)x, (int)y)))
+				int NewX = Start.Position.X + (int)((double)x * cosArgument);
+				int NewY = Start.Position.Y + (int)((double)x * sinArgument);
+				if (!PointValid(new Point(NewX, NewY)))
 				{
 					if (lastFoundNode == null)
 					{
-						RRTNode BetweenNode = new RRTNode(new Point((int)x, (int)y), Start.Orientation, Start);
+						RRTNode BetweenNode = new RRTNode(new Point(NewX, NewY), Start.Orientation, Start);
 						Start.AddSucessor(BetweenNode);
 						lastFoundNode = BetweenNode;
 						BetweenNode.Inverted = End.Inverted;
 						this.AllNodes.Add(BetweenNode);
-
 					}
-
 					else
 					{
-						RRTNode BetweenNode = new RRTNode(new Point((int)x, (int)y), lastFoundNode.Orientation, lastFoundNode);
+						RRTNode BetweenNode = new RRTNode(new Point(NewX, NewY), lastFoundNode.Orientation, lastFoundNode);
 						lastFoundNode.AddSucessor(BetweenNode);
 						lastFoundNode = BetweenNode;
 						BetweenNode.Inverted = End.Inverted;
 						this.AllNodes.Add(BetweenNode);
-
-						//Console.WriteLine(BetweenNode.ToString());
 					}
 					return true;
 				}
@@ -318,24 +308,10 @@ namespace BRRT
 
 			};
 
-			//Step with "StepWidth" from start x to end x (Or if the StartPosition is > then the EndPosition the other way round
-			if (Start.Position.X < End.Position.X)
-			{
-				for (double x = Start.Position.X; x < End.Position.X; x += StepWidth)
-				{
-					if (!CalculateNewPoint(x)) //Break if a not valid point was stepped into
-						break;
-				}
+			for (double x = 0; x < distance; x += StepWidth) {
+				if (!CalculateNewPoint (x))
+					break;
 			}
-			else
-			{
-				for (double x = Start.Position.X; x > End.Position.X; x -= StepWidth)
-				{
-					if (!CalculateNewPoint(x))
-						break;
-				}
-			}
-
 
 		}
 		/// <summary>
@@ -419,61 +395,73 @@ namespace BRRT
 		{
 			return InternalMap.IsOccupied(_Point.X, _Point.Y);
 		}
-
+		/// <summary>
+		/// Find a path from the endpoint to the startpoint.
+		/// This is done by looking at all points and selecting the points that are in the given target area.
+		/// Their orientation may only vary by the given AcceptableOrientationDeviation.
+		/// </summary>
+		/// <returns>The path to target.</returns>
 		public List<RRTPath> FindPathToTarget()
 		{
+			//Move area around the endpoint
 			Rectangle TranslatedTargetArea = new Rectangle(EndPoint.X - TargetArea.Width / 2, EndPoint.Y - TargetArea.Height / 2, TargetArea.Width, TargetArea.Height);
-			List<RRTNode> NodesInTargetArea = new List<RRTNode>();
 
+			List<RRTNode> NodesInTargetArea = new List<RRTNode>();
 			List<RRTPath> Paths = new List<RRTPath>();
+
+			//Step through all nodes
 			foreach (var item in AllNodes)
 			{
-				
+				//Check if the rectangle contains the point and check the orientation
 				if (TranslatedTargetArea.Contains(item.Position) && Math.Abs(item.Orientation - EndRRTNode.Orientation) < AcceptableOrientationDeviation)
 				{
+					//Add to the list of found nodes.
 					NodesInTargetArea.Add(item);
 					Console.WriteLine("Found node in target area: " + item);
-
 				}
 			}
+			//In case no point was found return
 			if (NodesInTargetArea.Count == 0)
 				return Paths;
+
+			//Some helpers for creating a nice color for the paths ;)
 			int B = 0;
 			int R = 255;
 			int Step = 255 / NodesInTargetArea.Count;
+
+			//Step through all found nodes
 			foreach (var item in NodesInTargetArea)
 			{
+				//Calculate length
 				double length = 0;
+
+				//Follow the Predecessor until their is none (this is the startpoint then)
 				RRTNode previous = item.Predecessor;
-
-
 				RRTNode end = null;
 
 				while (previous != null)
 				{
-					//RRTHelpers.DrawImportantNode(previous, InternalMap, 2, Color.FromArgb(R, 50, B));
 					if (previous.Predecessor != null) {
+						//TODO replace with RRTHelpers.CalculateDistance
 						length += Math.Sqrt (Math.Pow (previous.Position.X - previous.Predecessor.Position.X, 2) + Math.Pow (previous.Position.Y - previous.Predecessor.Position.Y, 2));
-						if (PointValid (previous.Position))
-							Console.WriteLine ("WTF");
 					}
 					else
 						end = previous;
-					
 					previous = previous.Predecessor;
 
-					//path.CountNodes++;
 				}
+				//Create new path from start and end item
 				RRTPath path = new RRTPath(item,end);
 				Paths.Add(path);
 				path.Color = Color.FromArgb(R, 50, B);
-				//path.Length = length;
+
 				path.DistanceToEnd = RRTHelpers.CalculateDistance(path.Start, EndRRTNode);
 				path.OrientationDeviation = path.Start.Orientation - EndRRTNode.Orientation;
 				B += Step;
 				R -= Step;
 			}
 
+			//Sort the list by the cost function of the given paths
 			List<RRTPath> SortedList = Paths.AsParallel().OrderBy(o => o.Cost()).ToList();
 			foreach (var item in SortedList)
 			{
@@ -483,12 +471,13 @@ namespace BRRT
 
 			return SortedList;
 		}
+		/// <summary>
+		/// Prints the progress.
+		/// </summary>
 		void PrintProgress()
 		{
 			Console.SetCursorPosition (0, Console.CursorTop-1);
-
 			Console.WriteLine ("Progress: " + Progress + "%");
-
 		}
 	}
 }

@@ -8,7 +8,7 @@ namespace BRRT
 		public double MinimumRadius{get;set;}
 		public UInt32 Iterations { get; set;}
 		public double AllowedOrientationDeviation {get;set;}
-		public double SearchDistance{ get; set;}
+
 		public RRTPath Path {get;private set;}
 		public int StepWidthStraight { get; private set;}
 		public Map InternalMap { get; private set;}
@@ -22,16 +22,14 @@ namespace BRRT
 			this.InternalMap = _Map;
 
 			this.Path = _Path;
-			this.Iterations = 300000;
+			this.Iterations = 500000;
 			this.MaximumDriftAngle = 10;
 			this.MinimumRadius = 20;
 			this.AllowedOrientationDeviation = 3;
-			this.SearchDistance = 700;
 			this.MinimumDistance = 100;
 			this.StepWidthStraight = 7;
 			this.EndPoint = _EndPoint;
 			this.StepWidthEnd = 4;
-
 
 		}
 		public void Optimize()
@@ -41,8 +39,6 @@ namespace BRRT
 			OptimizeStraight ();
 			OptimizeForEndPoint ();
 
-		
-		
 			//
 			//OptimizeCurves ();
 		}
@@ -52,7 +48,7 @@ namespace BRRT
 			RRTNode previous = Path.Start;
 			Console.WriteLine ("Path length before optimization for endpoint: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
 			Console.WriteLine ();
-			int countIt = 0;
+
 			while (previous != null) {
 
 				if (previous == null)
@@ -110,9 +106,8 @@ namespace BRRT
 					}
 				}
 				previous = previous.Predecessor;
-				countIt++;
+
 			}
-			Console.WriteLine ("count: " + countIt);
 			Path.CalculateLength ();
 			Console.WriteLine ("Path length after optimization for endpoint: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
 
