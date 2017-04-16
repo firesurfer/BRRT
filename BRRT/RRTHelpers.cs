@@ -56,7 +56,7 @@ namespace BRRT
 			double Orientation = BaseNode.Orientation;
 
 			//TODO Check invertion
-			bool Inverted = ShallInvertOrientation(InvertProbability) ^ BaseNode.Inverted;
+			bool Inverted = ShallInvertOrientation(InvertProbability) ;//^ BaseNode.Inverted;
 
 			if ( Inverted)//& !BaseNode.Inverted)
 			{
@@ -100,10 +100,8 @@ namespace BRRT
 			double Distance = Randomizer.NextDouble() * MaximumCurveDistance + MinimumRadius;
 
 			//Angle should be somewhere between -180 and 180
-			double Angle = (Randomizer.NextDouble()-0.5) * 360;
-			//When the angle is negativ we drive backwards. But if we are alread driving backwards -> drive forwards
-			//TODO check invertion
-			bool Inverted = (Angle < 0) ^ BaseNode.Inverted;
+			// NEW: Angle between 0 and 360, sonst passt er nicht zum restlichen Zählsystem!!!
+			double Angle = (Randomizer.NextDouble()) * 360;
 
 			//Angle to our middle point (orthogonal to orientation)
 			double AngleToMiddle = BaseNode.Orientation;
@@ -145,13 +143,22 @@ namespace BRRT
 
 			//Console.WriteLine("BaseAngle: " + BaseAngle);
 
-			double NewOrientation = BaseNode.Orientation - (BaseAngle - Angle);
+			//When the angle is negative we drive backwards. 
+			//TODO check invertion
+			// NEW Wir fahren rückwärts, wenn alpha den Baseangle übersteigt!
+			bool Inverted = (InvertOrientation(BaseAngle) > Angle) && (Angle > BaseAngle); //^ BaseNode.Inverted;
+
+
+			double NewOrientation = 0;
+			NewOrientation = BaseNode.Orientation - (BaseAngle - Angle);
+			
 			NewOrientation = SanatizeAngle(NewOrientation);
 			//Console.WriteLine("Orientation: " + NewOrientation);
 			_Distance = Distance;
 
 			_Middle = Middle;
 			_BaseAngle = BaseAngle;
+
 			RRTNode Node = new RRTNode(new Point(NewX, NewY), NewOrientation, null);
 			Node.Inverted = Inverted;
 			//Console.WriteLine(Node);
@@ -242,7 +249,7 @@ namespace BRRT
 				}
 			}
 
-			for (int i = 0; i < 10; i++)
+			for (int i = 0; i < 15; i++)
 			{
 				if (!Base.Inverted)
 				{
@@ -254,8 +261,8 @@ namespace BRRT
 				}
 				else
 				{
-					int x = Base.Position.X + (int)(i * Math.Cos(InvertOrientation(Base.Orientation) * ToRadians));
-					int y = Base.Position.Y + (int)(i * Math.Sin(InvertOrientation(Base.Orientation) * ToRadians));
+					int x = Base.Position.X + (int)(i * Math.Cos(Base.Orientation * ToRadians));
+					int y = Base.Position.Y + (int)(i * Math.Sin(Base.Orientation * ToRadians));
 					_Map.DrawPixelOnBitmap(_Map.ToMapCoordinates(new Point(x, y)), Color.DarkOliveGreen);
 				}
 			}

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
+using System.Xml.Serialization;
 namespace BRRT
 {
 	public class RRTPath
@@ -21,6 +23,9 @@ namespace BRRT
 			//Calculate length and amount of nodes
 			CalculateLenght();
 		}
+		public RRTPath()
+		{
+		}
 		public void CalculateLenght()
 		{
 			Length = 0;
@@ -38,6 +43,18 @@ namespace BRRT
 		public double Cost()
 		{
 			return 2* Length + 0.5* DistanceToEnd + OrientationDeviation;
+		}
+		public void SaveToFile(string Path)
+		{
+			XmlSerializer ser = new XmlSerializer(this.GetType());
+			System.IO.TextWriter writer = new System.IO.StreamWriter (Path);
+			ser.Serialize (writer, this);
+		}
+		public static RRTPath FromFile (string Path)
+		{
+			XmlSerializer ser = new XmlSerializer (typeof(RRTPath));
+			System.IO.TextReader reader = new System.IO.StreamReader (Path);
+			return (RRTPath)ser.Deserialize (reader);
 		}
 		public List<RRTNode> ToList()
 		{

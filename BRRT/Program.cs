@@ -39,7 +39,7 @@ namespace BRRT
 
 
 					RRT Algorithm = new RRT(MyMap);
-				Stopwatch watch = new Stopwatch();
+					Stopwatch watch = new Stopwatch();
 
 					Algorithm.Finished += (object sender, EventArgs e) =>{
 						watch.Stop();
@@ -53,8 +53,11 @@ namespace BRRT
 
 						if(paths.Count > 0)
 						{
-							
+
+
 							RRTPath shortestPath = RRTPath.CleanPath(paths[0]);
+							//Does not work yet
+							//shortestPath.SaveToFile("Path.xml");
 							//Syncing maps:
 							//MyMap.SyncMapToImage();
 							//MyMap.SaveBitmapToFile("Test.bmp");
@@ -64,7 +67,7 @@ namespace BRRT
 
 
 							//Ok optimize with the currently best path
-
+							Console.WriteLine("Starting Optimization");
 							PathOptimizer optimizer = new PathOptimizer(shortestPath, MyMap, Algorithm.EndRRTNode);
 							watch.Reset();
 							watch.Start();
@@ -73,6 +76,7 @@ namespace BRRT
 							Console.WriteLine("Optimizing took: " + watch.ElapsedMilliseconds + " ms");
 							optimizer.Path.Color = Color.Blue;
 							RRTHelpers.DrawPath(optimizer.Path, MyMap, Pens.DarkGoldenrod);
+
 						}
 						else
 						{
@@ -91,7 +95,8 @@ namespace BRRT
 						RRTHelpers.DrawImportantNode(Algorithm.EndRRTNode, MyMap,5, Color.Aqua);
 						watch.Stop();
 						Console.WriteLine("Drawing took: " + watch.ElapsedMilliseconds + " ms");
-						if (paths.Count >0) {
+						if (paths.Count >0) 
+						{
 							//Save the result
 							MyMap.SaveBitmapToFile(outputPath);
 						}

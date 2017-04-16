@@ -117,10 +117,10 @@ namespace BRRT
 		public RRT(Map _Map)
 		{
 			this.InternalMap = _Map;
-			this.Iterations = 70000;
+			this.Iterations = 50000;
 			this.MaximumDrift = 20;
 			this.StepWidth = 5;
-			this.CircleStepWidth = 5;
+			this.CircleStepWidth = 10;
 			this.MinumumRadius = 20;
 			this.TargetArea = new Rectangle(0, 0,50, 50);
 			this.AcceptableOrientationDeviation = 4;
@@ -151,6 +151,7 @@ namespace BRRT
 			this.AllNodes.Add(StartRRTNode);
 			//Do n iterations of the algorithm
 			double PreviousProgress = 0;
+			GenerateStartLine ();
 			Console.WriteLine ();
 			for (UInt32 it = 0; it < Iterations; it++)
 			{
@@ -166,6 +167,60 @@ namespace BRRT
 			if (Finished != null)
 				Finished(this, new EventArgs());
 		}
+		private void GenerateStartLine()
+		{
+			//TODO calculate distance
+			double Distance = 1000;
+
+			for (int offset = (int)-MaximumDrift; offset < (int)MaximumDrift; offset++) {
+				
+			
+				RRTNode lastFound = null;
+				for (int i = 0; i < Distance; i = i + StepWidth) {
+					int NewX = StartRRTNode.Position.X + (int)((double)i * Math.Cos ((StartRRTNode.Orientation + offset) * RRTHelpers.ToRadians));
+					int NewY = StartRRTNode.Position.Y + (int)((double)i * Math.Sin ((StartRRTNode.Orientation+ offset) * RRTHelpers.ToRadians));
+					if (!PointValid (new Point ((int)NewX, (int)NewY))) {
+						if (lastFound == null) {
+							RRTNode NewNode = new RRTNode (new Point (NewX, NewY), StartRRTNode.Orientation + offset, StartRRTNode);
+							StartRRTNode.AddSucessor (NewNode);
+							this.AllNodes.Add (NewNode);
+							lastFound = NewNode;
+						} else {
+							RRTNode NewNode = new RRTNode (new Point (NewX, NewY), StartRRTNode.Orientation+ offset, lastFound);
+							lastFound.AddSucessor (NewNode);
+							this.AllNodes.Add (NewNode);
+							lastFound = NewNode;
+						}
+					} else
+						break;
+
+				}
+				lastFound = null;
+				for (int i = 0; i < Distance; i = i+ StepWidth) {
+					int NewX = StartRRTNode.Position.X + (int)((double)i * Math.Cos (RRTHelpers.InvertOrientation (StartRRTNode.Orientation + offset) * RRTHelpers.ToRadians));
+					int NewY = StartRRTNode.Position.Y + (int)((double)i * Math.Sin (RRTHelpers.InvertOrientation (StartRRTNode.Orientation +offset) * RRTHelpers.ToRadians));
+					if (!PointValid (new Point ((int)NewX, (int)NewY))) {
+						if (lastFound == null) {
+							RRTNode NewNode = new RRTNode (new Point (NewX, NewY), StartRRTNode.Orientation + offset, StartRRTNode);
+							NewNode.Inverted = true;
+							StartRRTNode.AddSucessor (NewNode);
+							this.AllNodes.Add (NewNode);
+							lastFound = NewNode;
+						} else {
+							RRTNode NewNode = new RRTNode (new Point (NewX, NewY), StartRRTNode.Orientation +offset, lastFound);
+							lastFound.AddSucessor (NewNode);
+							this.AllNodes.Add (NewNode);
+							lastFound = NewNode;
+							NewNode.Inverted = true;
+						}
+					} else
+						break;
+
+				}
+
+			}
+
+		}
 		/// <summary>
 		/// Do a step into the right direction
 		/// </summary>
@@ -176,7 +231,7 @@ namespace BRRT
 			RRTNode RandomNode = RRTHelpers.SelectRandomNode(AllNodes);
 
 			//Produces very strange results sometimes
-			bool SelectNearest = RRTHelpers.ShallInvertOrientation (125);
+			bool SelectNearest = RRTHelpers.ShallInvertOrientation (100);
 			if (SelectNearest) {
 				//Take from 100 nodes the node that is the nearest to the endpoint
 				double bestDistance = RRTHelpers.CalculateDistance (RandomNode, EndRRTNode);
@@ -234,7 +289,7 @@ namespace BRRT
 			//Checks if the node is valid 
 			//Adds it into the list of nodes.
 			//Returns false if point not valid 
-			Func<int, bool> CalculateNewPoint = (int x) =>
+			Func<double, bool> CalculateNewPoint = (double x) =>
 			{
 				double y = m * x + b;
 				if (!PointValid(new Point((int)x, (int)y)))
@@ -269,7 +324,7 @@ namespace BRRT
 			//Step with "StepWidth" from start x to end x (Or if the StartPosition is > then the EndPosition the other way round
 			if (Start.Position.X < End.Position.X)
 			{
-				for (int x = Start.Position.X; x < End.Position.X; x += StepWidth)
+				for (double x = Start.Position.X; x < End.Position.X; x += StepWidth)
 				{
 					if (!CalculateNewPoint(x)) //Break if a not valid point was stepped into
 						break;
@@ -277,7 +332,7 @@ namespace BRRT
 			}
 			else
 			{
-				for (int x = Start.Position.X; x > End.Position.X; x -= StepWidth)
+				for (double x = Start.Position.X; x > End.Position.X; x -= StepWidth)
 				{
 					if (!CalculateNewPoint(x))
 						break;

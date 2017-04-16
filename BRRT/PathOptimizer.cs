@@ -15,18 +15,20 @@ namespace BRRT
 		public double MinimumDistance;
 		public RRTNode EndPoint { get; private set;}
 		public double StepWidthEnd { get; private set;}
+
+		private double Progress {get;  set;}
 		public PathOptimizer (RRTPath _Path, Map _Map,RRTNode _EndPoint)
 		{
 			this.InternalMap = _Map;
 
 			this.Path = _Path;
-			this.Iterations = 50000;
-			this.MaximumDriftAngle = 20;
+			this.Iterations = 150000;
+			this.MaximumDriftAngle = 10;
 			this.MinimumRadius = 20;
-			this.AllowedOrientationDeviation = 1;
+			this.AllowedOrientationDeviation = 3;
 			this.SearchDistance = 700;
 			this.MinimumDistance = 100;
-			this.StepWidthStraight = 5;
+			this.StepWidthStraight = 7;
 			this.EndPoint = _EndPoint;
 			this.StepWidthEnd = 4;
 
@@ -49,13 +51,14 @@ namespace BRRT
 			//Go along from then nearest point to the endpoint
 			RRTNode previous = Path.Start;
 			Console.WriteLine ("Path length before optimization for endpoint: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
+			Console.WriteLine ();
 			int countIt = 0;
 			while (previous != null) {
 
 				if (previous == null)
 					break;
 				//Check if the orientation of the selected point is nearly the same as the orientation of the endpoint
-				if (Math.Abs (previous.Orientation - EndPoint.Orientation) < AllowedOrientationDeviation*4) {
+				if (Math.Abs (previous.Orientation - EndPoint.Orientation) < AllowedOrientationDeviation*5) {
 					//Okey connect them
 					RRTNode selectedNode = previous;
 					//TODO is this wise?
@@ -68,7 +71,7 @@ namespace BRRT
 					RRTNode start = selectedNode.Clone ();
 					double Distance = RRTHelpers.CalculateDistance (selectedNode, EndPoint);
 					double angle = RRTHelpers.CalculateAngle (selectedNode, EndPoint);
-					if (angle > this.MaximumDriftAngle) {
+					if (RRTHelpers.SanatizeAngle(angle * RRTHelpers.ToDegree) > this.MaximumDriftAngle) {
 						previous = previous.Predecessor;
 						continue;
 					}
@@ -121,9 +124,17 @@ namespace BRRT
 		}
 		public void OptimizeStraight()
 		{
+			double PreviousProgress = 0;
+
 			Console.WriteLine ("Path length before optimization: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
 			Random random = new Random (System.DateTime.Now.Second);
 			for (UInt32 it = 0; it < Iterations; it++) {
+
+				Progress = (int)(Math.Round(((double)it / (double)Iterations)*100));
+				if (Progress != PreviousProgress) {
+					PreviousProgress = Progress;
+					PrintProgress ();
+				}
 				//Select two random points
 				int indexNode1 = random.Next(1,Path.CountNodes-1);
 				RRTNode node1 = Path.SelectNode(indexNode1);
@@ -139,9 +150,13 @@ namespace BRRT
 					double angle = RRTHelpers.CalculateAngle (node1, node2);
 					//Console.WriteLine ("Selected: " + node1 + " " + node2 + " Distance: " + Distance + " Angle: " + angle);
 
-
+					if (RRTHelpers.SanatizeAngle(angle * RRTHelpers.ToDegree) > this.MaximumDriftAngle)
+						continue;
+					if (node1.Inverted != node2.Inverted)
+						continue;
 					RRTNode start = new RRTNode(node1.Position,node1.Orientation, null);
 					RRTNode end = new RRTNode (node2.Position, node2.Orientation, null);
+
 					//check if start is predecessor of end else swap them
 
 					/*RRTNode temp = end;
@@ -228,6 +243,13 @@ namespace BRRT
 		}
 		private void ClearChildsTillNode(RRTNode baseNode, RRTNode endNode)
 		{
+
+		}
+		private void PrintProgress()
+		{
+			Console.SetCursorPosition (0, Console.CursorTop-1);
+
+			Console.WriteLine ("Progress: " + Progress + "%");
 
 		}
 	}

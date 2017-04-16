@@ -26,6 +26,10 @@ namespace BRRT
 			this.Predecessor = _Predecessor;
 			this.Successors = new List<RRTNode> ();
 		}
+		public RRTNode()
+		{
+
+		}
 		/// <summary>
 		/// Adds a sucessor to the list of successors
 		/// </summary>

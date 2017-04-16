@@ -2,6 +2,6 @@
 for i in `seq 1 1`;
 do
 
-mono BRRT.exe MAP_roundedFreeForRobot.png 1053,747,90 2292,448,0 ResultMap$i.png 
+mono BRRT.exe MAP_roundedFreeForRobot.png 1000,1247,90 2356,420,0 ResultMap$i.png 
 
 done
