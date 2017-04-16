@@ -89,18 +89,15 @@ namespace BRRT
 		/// <param name="_Angle">Angle.</param>
 		public static RRTNode GetRandomCurvePoint(RRTNode BaseNode, double MinimumRadius, ref double _Distance, ref double _Angle, ref double _BaseAngle, ref Point _Middle, ref bool Left)
 		{
-
 			//Decide whether we want to have right or left turn
 			//True = left , Right = false
 			bool LeftOrRight = ShallInvertOrientation(256 / 2);
 			Left = LeftOrRight;
 
 			//Get Random value for the distance between or choosen point and the middle of the circle. 
-
 			double Distance = Randomizer.NextDouble() * MaximumCurveDistance + MinimumRadius;
 
-			//Angle should be somewhere between -180 and 180
-			// NEW: Angle between 0 and 360, sonst passt er nicht zum restlichen Zählsystem!!!
+			// Angle between 0 and 360.
 			double Angle = (Randomizer.NextDouble()) * 360;
 
 			//Angle to our middle point (orthogonal to orientation)
@@ -111,21 +108,12 @@ namespace BRRT
 				AngleToMiddle -= 90;
 			AngleToMiddle = SanatizeAngle(AngleToMiddle);
 
-
-
-			/*Console.WriteLine("Left:" + Left);
-			Console.WriteLine("Alpha: " + Angle);
-			Console.WriteLine("AngleToMiddle: " + AngleToMiddle);
-			Console.WriteLine("Distance: " + Distance);
-			Console.WriteLine("BaseNode: " + BaseNode);*/
-
 			//Calculate center point
 			double MiddleX = BaseNode.Position.X + Math.Cos(AngleToMiddle * ToRadians) * Distance;
 			double MiddleY = BaseNode.Position.Y + Math.Sin(AngleToMiddle * ToRadians) * Distance;
 
 
 			Point Middle = new Point((int)MiddleX, (int)MiddleY);
-
 
 			double BaseAngle = 0;
 			BaseAngle = Math.Atan2(BaseNode.Position.Y - Middle.Y, BaseNode.Position.X - Middle.X)*ToDegree;
@@ -134,7 +122,6 @@ namespace BRRT
 			//Calculate new point
 			int NewX = 0;
 			int NewY = 0;
-
 
 			NewX = Middle.X + (int)((double)Distance * Math.Cos((Angle) * ToRadians));
 			NewY = Middle.Y + (int)((double)Distance * Math.Sin((Angle) * ToRadians));
@@ -159,9 +146,6 @@ namespace BRRT
 			//Console.WriteLine(Node);
 			//Console.WriteLine();
 			return Node;
-
-
-
 
 		}
 		/// <summary>
@@ -189,15 +173,17 @@ namespace BRRT
 				NewOrientation = NewOrientation - 360;
 			return NewOrientation;
 		}
+		/// <summary>
+		/// Draws the tree from the startpoint.
+		/// </summary>
+		/// <param name="Base">Base.</param>
+		/// <param name="_Map">Map.</param>
 		public static void DrawTree(RRTNode Base, Map _Map)
 		{
 			DrawImportantNode(Base, _Map, 5, Color.Red);
-
 			Action<RRTNode> DrawAction = null;
 			DrawAction = (RRTNode node) =>
 			{
-
-
 				DrawImportantNode(node, _Map, 2, Color.Blue);
 				foreach (var item in node.Successors)
 				{
@@ -207,10 +193,14 @@ namespace BRRT
 					g.DrawLine(Pens.Black, position, sucPosition);
 
 				}
-
 			};
 			StepThroughTree(Base, DrawAction);
 		}
+		/// <summary>
+		/// Helper method for iterating through the tree.
+		/// </summary>
+		/// <param name="Base">Base.</param>
+		/// <param name="_Action">Action.</param>
 		private static void StepThroughTree(RRTNode Base, Action<RRTNode> _Action)
 		{
 			foreach (var item in Base.Successors)
@@ -219,6 +209,12 @@ namespace BRRT
 				_Action(item);
 			}
 		}
+		/// <summary>
+		/// Draws the given RRTPath.
+		/// </summary>
+		/// <param name="Path">Path.</param>
+		/// <param name="_Map">Map.</param>
+		/// <param name="PathPen">Path pen.</param>
 		public static void DrawPath(RRTPath Path, Map _Map, Pen PathPen)
 		{
 			RRTNode previous = Path.Start;
@@ -233,6 +229,13 @@ namespace BRRT
 				previous = previous.Predecessor;
 			}
 		}
+		/// <summary>
+		/// Draws the given Node + its orientation.
+		/// </summary>
+		/// <param name="Base">Base.</param>
+		/// <param name="_Map">Map.</param>
+		/// <param name="additional">Additional.</param>
+		/// <param name="col">Col.</param>
 		public static void DrawImportantNode(RRTNode Base, Map _Map, int additional, Color col)
 		{
 			Point position = _Map.ToMapCoordinates(Base.Position);
@@ -243,12 +246,10 @@ namespace BRRT
 					_Map.DrawPixelOnBitmap(new Point(x, y), col);
 				}
 			}
-
 			for (int i = 0; i < 15; i++)
 			{
 				if (!Base.Inverted)
 				{
-
 					int x = Base.Position.X + (int)(i * Math.Cos(Base.Orientation * ToRadians));
 					int y = Base.Position.Y + (int)(i * Math.Sin(Base.Orientation * ToRadians));
 					_Map.DrawPixelOnBitmap(_Map.ToMapCoordinates(new Point(x, y)), Color.DarkRed);  

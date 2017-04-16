@@ -48,7 +48,6 @@
     <Compile Include="Map.cs" />
     <Compile Include="RRTHelpers.cs" />
     <Compile Include="ImageHelpers.cs" />
-    <Compile Include="MainForm.cs" />
     <Compile Include="PathOptimizer.cs" />
     <Compile Include="RRTPath.cs" />
   </ItemGroup>
