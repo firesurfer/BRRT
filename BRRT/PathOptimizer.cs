@@ -22,7 +22,7 @@ namespace BRRT
 			this.InternalMap = _Map;
 
 			this.Path = _Path;
-			this.Iterations = 150000;
+			this.Iterations = 300000;
 			this.MaximumDriftAngle = 10;
 			this.MinimumRadius = 20;
 			this.AllowedOrientationDeviation = 3;
@@ -61,11 +61,6 @@ namespace BRRT
 				if (Math.Abs(previous.Orientation - EndPoint.Orientation) < AllowedOrientationDeviation*5) {
 					//Okey connect them
 					RRTNode selectedNode = previous;
-					//TODO is this wise?
-					//if (selectedNode.Inverted) {
-					//	previous = previous.Predecessor;
-					//	continue;
-					//}
 					RRTNode lastNode = null;
 					//Create a clone we can work on
 					RRTNode start = selectedNode.Clone ();
@@ -118,7 +113,7 @@ namespace BRRT
 				countIt++;
 			}
 			Console.WriteLine ("count: " + countIt);
-			Path.CalculateLenght ();
+			Path.CalculateLength ();
 			Console.WriteLine ("Path length after optimization for endpoint: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
 
 		}
@@ -209,19 +204,15 @@ namespace BRRT
 						node2.Successors.Clear ();
 						node2.Predecessor = null;
 						node1.Predecessor = null;
-						Path.CalculateLenght ();
-
-
-						//Console.WriteLine ("Path length: " + Path.Length + " Count: " + Path.CountNodes);
+						Path.CalculateLength ();
+					
 					}
 				}
 
 				
 			}
-			//Path = new RRTPath (Path.Start, Path.End);
-			Path.CalculateLenght();
+			Path.CalculateLength();
 			Console.WriteLine ("Path length after opt: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
-
 		}
 		// Testimplementierung von Kurven&Drift Optimierung
 		public void OptimizeCurves()
@@ -313,17 +304,15 @@ namespace BRRT
 						node2.Successors.Clear ();
 						node2.Predecessor = null;
 						node1.Predecessor = null;
-						Path.CalculateLenght ();
+						Path.CalculateLength ();
 
-
-						//Console.WriteLine ("Path length: " + Path.Length + " Count: " + Path.CountNodes);
 					}
 				}
 
 
-			}
-			//Path = new RRTPath (Path.Start, Path.End);
-			Path.CalculateLenght();
+			}	
+			Path.CalculateLength();
+			Console.WriteLine ();
 			Console.WriteLine ("Path length after opt: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
 
 
@@ -336,7 +325,7 @@ namespace BRRT
 		{
 			Console.SetCursorPosition (0, Console.CursorTop-1);
 
-			Console.WriteLine ("Progress: " + Progress + "%");
+			Console.WriteLine ("Progress optimizing: " + Progress + "%");
 
 		}
 	}

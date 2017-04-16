@@ -22,12 +22,12 @@ namespace BRRT
 			this.End = _End;
 
 			//Calculate length and amount of nodes
-			CalculateLenght();
+			CalculateLength();
 		}
 		public RRTPath()
 		{
 		}
-		public void CalculateLenght()
+		public void CalculateLength()
 		{
 			Length = 0;
 			CountNodes = 0;

@@ -11,6 +11,8 @@ namespace BRRT
 		
 		public static int Main(string[] args)
 		{
+			Stopwatch totalTimeWatch = new Stopwatch ();
+			totalTimeWatch.Start ();
 			if (args.Length > 3) {
 				//Parse arguments
 				//1. Path 2. Start 3. Stop
@@ -52,22 +54,17 @@ namespace BRRT
 						//Event that gets called when the RRT is finished
 						Console.WriteLine("Finished");
 
+						//Look for paths from the endpoint to the start
 						List<RRTPath> paths = Algorithm.FindPathToTarget();
-
 
 
 						if(paths.Count > 0)
 						{
 
-
+							//Clean the path (Remove all branches in the tree we dont want to follow)
 							RRTPath shortestPath = RRTPath.CleanPath(paths[0]);
-							//Does not work yet
-							//shortestPath.SaveToFile("Path.xml");
-							//Syncing maps:
-							//MyMap.SyncMapToImage();
-							//MyMap.SaveBitmapToFile("Test.bmp");
-							//RRTHelpers.DrawPath(paths[0],MyMap, Pens.AliceBlue);
 							shortestPath.Color = Color.Red;
+							//Draw the path
 							RRTHelpers.DrawPath(shortestPath, MyMap, Pens.Cyan);
 
 
@@ -78,27 +75,27 @@ namespace BRRT
 							watch.Start();
 							optimizer.Optimize();
 							watch.Stop();
+
 							Console.WriteLine("Optimizing took: " + watch.ElapsedMilliseconds + " ms");
 							optimizer.Path.Color = Color.Blue;
+							//Draw the path
 							RRTHelpers.DrawPath(optimizer.Path, MyMap, Pens.DarkGoldenrod);
+							//Save it into a file if a xml path was given
 							if(pathXml != "")
-							{
 								optimizer.Path.SaveToFile(pathXml);
-							}
-
 						}
 						else
 						{
 							Console.WriteLine("No paths found");
-
 						}
 
 						watch.Reset();
 						watch.Start();
+						//Draw the legend in the upper left corner
 						MyMap.DrawLegend();
 						//Draw the tree on the map
 						//RRTHelpers.DrawTree(Algorithm.StartRRTNode, MyMap);
-
+						//Draw the start point
 						RRTHelpers.DrawImportantNode(Algorithm.StartRRTNode, MyMap,5, Color.Red);
 						//Draw the endpoint
 						RRTHelpers.DrawImportantNode(Algorithm.EndRRTNode, MyMap,5, Color.Aqua);
@@ -109,30 +106,15 @@ namespace BRRT
 							//Save the result
 							MyMap.SaveBitmapToFile(outputPath);
 						}
-
-						//Show the result in an Form (Can be used for debugging)
-						/*Application.EnableVisualStyles();
-						Application.SetCompatibleTextRenderingDefault(false);
-						MainForm frm = new MainForm();
-						frm.ShowImage(MyMap);
-
-						frm.CreateTree(Algorithm.StartRRTNode);
-						Application.Run(frm);
-						*/
-
-
-
-
 					};
 					//Start the RRT
 					watch.Start();
 					Algorithm.Start (StartPoint, StartOrientation, StopPoint, StopOrientation);
-
-
-					
 				}
 						
 			}
+			totalTimeWatch.Stop ();
+			Console.WriteLine ("Totaltime was: " + totalTimeWatch.ElapsedMilliseconds + " ms");
 			return 0;
 		}
 	}
