@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Xml.Serialization;
+
 namespace BRRT
 {
 	public class RRTPath
@@ -46,16 +47,12 @@ namespace BRRT
 		}
 		public void SaveToFile(string Path)
 		{
-			XmlSerializer ser = new XmlSerializer(this.GetType());
+			XmlSerializer ser = new XmlSerializer(NodesList.GetType());
 			System.IO.TextWriter writer = new System.IO.StreamWriter (Path);
-			ser.Serialize (writer, this);
+			Console.WriteLine ("Saving path to: " + Path);
+			ser.Serialize (writer, NodesList);
 		}
-		public static RRTPath FromFile (string Path)
-		{
-			XmlSerializer ser = new XmlSerializer (typeof(RRTPath));
-			System.IO.TextReader reader = new System.IO.StreamReader (Path);
-			return (RRTPath)ser.Deserialize (reader);
-		}
+
 		public List<RRTNode> ToList()
 		{
 			List<RRTNode> nodes = new List<RRTNode> ();

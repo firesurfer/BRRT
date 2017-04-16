@@ -31,6 +31,11 @@ namespace BRRT
 
 				Console.WriteLine ("Start is: " + StartPoint.ToString () + " , " + StartOrientation);
 				Console.WriteLine ("Stop is: " + StopPoint.ToString () + " , " + StopOrientation);
+				string pathXml = "";
+				if (args.Length > 4) {
+					pathXml = args [4];
+					Console.WriteLine ("Saving path to: " + pathXml);
+				}
 
 				if (File.Exists (MapPath)) {
 					Bitmap BitMap = ImageHelpers.CreateNonIndexedImage( new Bitmap (MapPath));
@@ -76,6 +81,10 @@ namespace BRRT
 							Console.WriteLine("Optimizing took: " + watch.ElapsedMilliseconds + " ms");
 							optimizer.Path.Color = Color.Blue;
 							RRTHelpers.DrawPath(optimizer.Path, MyMap, Pens.DarkGoldenrod);
+							if(pathXml != "")
+							{
+								optimizer.Path.SaveToFile(pathXml);
+							}
 
 						}
 						else

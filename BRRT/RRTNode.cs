@@ -11,8 +11,10 @@ namespace BRRT
 		//Orientation of the robot at the Node
 		public double Orientation{ get;set;}
 		//Parent of this Node
+		[System.Xml.Serialization.XmlIgnore()]
 		public RRTNode Predecessor{ get; set;}
 		//List of childs of this Node
+		[System.Xml.Serialization.XmlIgnore()]
 		public List<RRTNode> Successors{ get; private set;}
 		/// <summary>
 		/// Indicates whether the Orienation was used inverted in the algorithm. This is used for generation configurations that are driving backwards.
