@@ -2,10 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Drawing;
-using MathNet.Numerics;
-using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Double;
-using MathNet;
+
 
 namespace BRRT
 {

@@ -1,6 +1,5 @@
 ﻿using System;
-using MathNet.Numerics;
-using MathNet.Numerics.LinearAlgebra;
+
 using System.Drawing;
 namespace BRRT
 {
