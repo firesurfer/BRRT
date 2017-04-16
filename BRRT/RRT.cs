@@ -117,7 +117,7 @@ namespace BRRT
 		public RRT(Map _Map)
 		{
 			this.InternalMap = _Map;
-			this.Iterations = 50000;
+			this.Iterations = 150000;
 			this.MaximumDrift = 20;
 			this.StepWidth = 5;
 			this.CircleStepWidth = 10;
@@ -477,7 +477,7 @@ namespace BRRT
 				R -= Step;
 			}
 
-			List<RRTPath> SortedList = Paths.OrderBy(o => o.Cost()).ToList();
+			List<RRTPath> SortedList = Paths.AsParallel().OrderBy(o => o.Cost()).ToList();
 			foreach (var item in SortedList)
 			{
 				Console.WriteLine("Length for path " + item.Color.ToString() + " : " + item.Length + " Distance to End: " +item.DistanceToEnd + " OrientationDif: " + item.OrientationDeviation);

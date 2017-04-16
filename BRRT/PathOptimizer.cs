@@ -44,7 +44,7 @@ namespace BRRT
 		
 		
 			//
-			OptimizeCurves ();
+			//OptimizeCurves ();
 		}
 		public void OptimizeForEndPoint()
 		{
@@ -58,14 +58,14 @@ namespace BRRT
 				if (previous == null)
 					break;
 				//Check if the orientation of the selected point is nearly the same as the orientation of the endpoint
-				if (Math.Abs (previous.Orientation - EndPoint.Orientation) < AllowedOrientationDeviation*5) {
+				if (Math.Abs(previous.Orientation - EndPoint.Orientation) < AllowedOrientationDeviation*5) {
 					//Okey connect them
 					RRTNode selectedNode = previous;
 					//TODO is this wise?
-					if (selectedNode.Inverted) {
-						previous = previous.Predecessor;
-						continue;
-					}
+					//if (selectedNode.Inverted) {
+					//	previous = previous.Predecessor;
+					//	continue;
+					//}
 					RRTNode lastNode = null;
 					//Create a clone we can work on
 					RRTNode start = selectedNode.Clone ();
@@ -154,24 +154,114 @@ namespace BRRT
 						continue;
 					if (node1.Inverted != node2.Inverted)
 						continue;
+					RRTNode start = node1.Clone (); //new RRTNode(node1.Position,node1.Orientation, null);
+					RRTNode end = node2.Clone(); //new RRTNode (node2.Position, node2.Orientation, null);
+
+					RRTNode lastNode = null;
+					bool success = true;
+
+					//Connect them
+					for (double i = 0; i <= Distance; i+= StepWidthStraight) {
+						int NewX = (int)(start.Position.X + i * Math.Cos (angle));
+						int NewY = (int)(start.Position.Y + i * Math.Sin (angle));
+
+						if (InternalMap.IsOccupied (NewX, NewY)) {
+							success = false;
+							break;
+						}
+
+						RRTNode newNode = null;
+						if (lastNode == null) {
+							newNode = new RRTNode (new System.Drawing.Point (NewX, NewY), node1.Orientation, start);
+							newNode.Inverted = start.Inverted;
+							start.Successors.Add (newNode);
+						} else {
+							newNode = new RRTNode (new System.Drawing.Point (NewX, NewY), node1.Orientation, lastNode);
+							lastNode.Successors.Add (newNode);
+							newNode.Inverted = lastNode.Inverted;
+						}
+						lastNode = newNode;
+					}
+					if (lastNode == null)
+						success = false;
+
+					//We successfully connected them
+					if (success) {
+						end.Predecessor = lastNode;
+						lastNode.AddSucessor (end);
+						if (node1.Predecessor != null) {
+							node1.Predecessor.Successors.Clear ();
+							node1.Predecessor.AddSucessor (start);
+
+							start.Predecessor = node1.Predecessor;
+						} else
+							Console.WriteLine ("Node1.Predecessor was null");
+
+						if (node2.Successors.Count > 0) {
+							end.AddSucessor (node2.Successors [0]);
+							node2.Successors [0].Predecessor = end;
+							node2.Predecessor = null;
+							node2.Successors.Clear ();
+						}
+						else
+							Console.WriteLine ("Node2.Successor[0] was null");
+						node1.Successors.Clear ();
+						node2.Successors.Clear ();
+						node2.Predecessor = null;
+						node1.Predecessor = null;
+						Path.CalculateLenght ();
+
+
+						//Console.WriteLine ("Path length: " + Path.Length + " Count: " + Path.CountNodes);
+					}
+				}
+
+				
+			}
+			//Path = new RRTPath (Path.Start, Path.End);
+			Path.CalculateLenght();
+			Console.WriteLine ("Path length after opt: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
+
+		}
+		// Testimplementierung von Kurven&Drift Optimierung
+		public void OptimizeCurves()
+		{
+			//dh. abs(kurve/kurvemax) + abs(drift/driftmax) <=1 sein
+
+			double PreviousProgress = 0;
+
+			Console.WriteLine ("Path length before optimization: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
+			Random random = new Random (System.DateTime.Now.Second);
+			for (UInt32 it = 0; it < Iterations; it++) {
+
+				Progress = (int)(Math.Round(((double)it / (double)Iterations)*100));
+				if (Progress != PreviousProgress) {
+					PreviousProgress = Progress;
+					PrintProgress ();
+				}
+				//Select two random points
+				int indexNode1 = random.Next(1,Path.CountNodes-1);
+				RRTNode node1 = Path.SelectNode(indexNode1);
+				RRTNode node2 = Path.SelectNode (random.Next(1,indexNode1));
+
+				//Check that they have NOT the same orientation
+				if (Math.Abs(node1.Orientation - node2.Orientation ) > AllowedOrientationDeviation) {
+					//Calculate distance between points
+					double Distance = RRTHelpers.CalculateDistance (node1, node2);
+					// TODO mindistance
+					if (Distance < MinimumRadius*2)
+						continue;
+					//Calculate angle between points
+					double angle = RRTHelpers.CalculateAngle (node1, node2);
+					//Console.WriteLine ("Selected: " + node1 + " " + node2 + " Distance: " + Distance + " Angle: " + angle);
+
+					if (RRTHelpers.SanatizeAngle(angle * RRTHelpers.ToDegree) > this.MaximumDriftAngle)
+						continue;
+					if (node1.Inverted != node2.Inverted)
+						continue;
 					RRTNode start = new RRTNode(node1.Position,node1.Orientation, null);
 					RRTNode end = new RRTNode (node2.Position, node2.Orientation, null);
 
-					//check if start is predecessor of end else swap them
-
-					/*RRTNode temp = end;
-					bool isPredecessor = false;
-					while (temp != null) {
-						if (temp.Position == start.Position) {
-							isPredecessor = true;
-						}
-						temp = temp.Predecessor;
-					}
-					if (isPredecessor) {
-						temp = start;
-						start = end;
-						end = start;
-					}*/
 
 					RRTNode lastNode = null;
 					bool success = true;
@@ -230,15 +320,12 @@ namespace BRRT
 					}
 				}
 
-				
+
 			}
 			//Path = new RRTPath (Path.Start, Path.End);
 			Path.CalculateLenght();
 			Console.WriteLine ("Path length after opt: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
 
-		}
-		public void OptimizeCurves()
-		{
 
 		}
 		private void ClearChildsTillNode(RRTNode baseNode, RRTNode endNode)

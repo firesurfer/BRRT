@@ -140,12 +140,7 @@ namespace BRRT
 			NewY = Middle.Y + (int)((double)Distance * Math.Sin((Angle) * ToRadians));
 			_Angle = Angle;
 
-
-			//Console.WriteLine("BaseAngle: " + BaseAngle);
-
-			//When the angle is negative we drive backwards. 
-			//TODO check invertion
-			// NEW Wir fahren rückwärts, wenn alpha den Baseangle übersteigt!
+			//We drive backwarts if Angle > Baseangle
 			bool Inverted = (InvertOrientation(BaseAngle) > Angle) && (Angle > BaseAngle); //^ BaseNode.Inverted;
 
 

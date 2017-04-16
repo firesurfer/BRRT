@@ -1,6 +1,0 @@
-/home/firesurfer/workspace/BRRT/BRRT/obj/x86/Release/.NETFramework,Version=v4.5.AssemblyAttribute.cs
-/home/firesurfer/workspace/BRRT/BRRT/bin/Release/BRRT.exe.mdb
-/home/firesurfer/workspace/BRRT/BRRT/bin/Release/BRRT.exe
-/home/firesurfer/workspace/BRRT/BRRT/obj/x86/Release/BRRT.exe
-/home/firesurfer/workspace/BRRT/BRRT/obj/x86/Release/BRRT.exe.mdb
-/home/firesurfer/workspace/BRRT/BRRT/bin/Release/MathNet.Numerics.dll
