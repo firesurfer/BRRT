@@ -6,18 +6,18 @@ namespace BRRT
 {
 	public static class RRTHelpers
 	{
-		static Random Randomizer = new Random (System.DateTime.Now.Second);
+		static Random Randomizer = new Random (System.DateTime.Now.Millisecond);
 		public const int MaximumDistance = 400;
 		public const int MaximumCurveDistance = 300;
-		public const double ToRadians = System.Math.PI / 180;
-		public const double ToDegree = 180 / System.Math.PI;
+		public const double ToRadians = System.Math.PI / 180.0;
+		public const double ToDegree = 180.0 / System.Math.PI;
 
 		/// <summary>
 		/// Re Seeds the Random class
 		/// </summary>
 		public static void ReSeedRandom ()
 		{
-			Randomizer = new Random (System.DateTime.Now.Second);
+			Randomizer = new Random (System.DateTime.Now.Millisecond);
 		}
 
 		/// <summary>

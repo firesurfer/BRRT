@@ -117,7 +117,7 @@ namespace BRRT
 			double PreviousProgress = 0;
 
 			Console.WriteLine ("Path length before optimization: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
-			Random random = new Random (System.DateTime.Now.Second);
+			Random random = new Random (System.DateTime.Now.Millisecond);
 			for (UInt32 it = 0; it < Iterations; it++) {
 
 				Progress = (int)(Math.Round(((double)it / (double)Iterations)*100));
