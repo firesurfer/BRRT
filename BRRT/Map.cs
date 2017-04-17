@@ -86,6 +86,11 @@ namespace BRRT
 			return false;
 
 		}
+		/// <summary>
+		/// Determines wether the given point is occupied on the map. Point will be converted to MapCoordinates
+		/// </summary>
+		/// <returns><c>true</c> if this instance is occupied the specified p; otherwise, <c>false</c>.</returns>
+		/// <param name="p">P.</param>
 		public bool IsOccupied(Point p)
 		{
 			return IsOccupied (p.X, p.Y);
@@ -116,6 +121,11 @@ namespace BRRT
 		{
 			return new Point (_Point.X - Width / 2,( _Point.Y - Height / 2)*-1);
 		}
+		/// <summary>
+		/// Draw a pixel on bitmap.
+		/// </summary>
+		/// <param name="_Point">Point.</param>
+		/// <param name="col">Col.</param>
 		public void DrawPixelOnBitmap(Point _Point, Color col)
 		{
 			if (_Point.X < 0 || _Point.Y < 0)
@@ -125,6 +135,9 @@ namespace BRRT
 
 			ImageMap.SetPixel (_Point.X, _Point.Y, col);
 		}
+		/// <summary>
+		/// Draws the legend on the image.
+		/// </summary>
 		public void DrawLegend()
 		{
 			Graphics g = Graphics.FromImage(ImageMap);
@@ -133,6 +146,9 @@ namespace BRRT
 			g.DrawString("RedArrow  : Orientation (forward)", new Font(FontFamily.GenericMonospace,15), Brushes.DarkRed, new RectangleF(10,50, 1000, 20));
 			g.DrawString("OliveArrow : Orientation (backwards)", new Font(FontFamily.GenericMonospace,15), Brushes.DarkOliveGreen, new RectangleF(10, 70, 1000, 20));
 		}
+		/// <summary>
+		/// Write the bool array into an image file
+		/// </summary>
 		public void SyncMapToImage()
 		{
 			for (int x = 0; x < Width; x++) {
