@@ -4,34 +4,82 @@ namespace BRRT
 {
 	public class PathOptimizer
 	{
+		/// <summary>
+		/// Gets or sets the maximum drift angle.
+		/// </summary>
+		/// <value>The maximum drift angle.</value>
 		public double MaximumDriftAngle{get;set;}
+		/// <summary>
+		/// Gets or sets the minimum radius.
+		/// </summary>
+		/// <value>The minimum radius.</value>
 		public double MinimumRadius{get;set;}
+		/// <summary>
+		/// Gets or sets the amount of iterations.
+		/// </summary>
+		/// <value>The iterations.</value>
 		public UInt32 Iterations { get; set;}
+		/// <summary>
+		/// Gets or sets the allowed orientation deviation.
+		/// The angle we accept between the orientation of two points in order to accept them.
+		/// </summary>
+		/// <value>The allowed orientation deviation.</value>
 		public double AllowedOrientationDeviation {get;set;}
-
+		/// <summary>
+		/// Gets the resulting path.
+		/// </summary>
+		/// <value>The path.</value>
 		public RRTPath Path {get;private set;}
+		/// <summary>
+		/// Gets the step width straight.
+		/// </summary>
+		/// <value>The step width straight.</value>
 		public int StepWidthStraight { get; private set;}
+		/// <summary>
+		/// Gets the internal map the optimizer runs on.
+		/// </summary>
+		/// <value>The internal map.</value>
 		public Map InternalMap { get; private set;}
-		public double MinimumDistance;
-		public RRTNode EndPoint { get; private set;}
-		public double StepWidthEnd { get; private set;}
 
+		/// <summary>
+		/// Gets the end point. The point we want to navigate to
+		/// </summary>
+		/// <value>The end point.</value>
+		public RRTNode EndPoint { get; private set;}
+
+		/// <summary>
+		/// Gets or sets the step width we use for optimizing our path towards the EndPoint.
+		/// </summary>
+		/// <value>The step width end.</value>
+		public double StepWidthEnd { get; set;}
+
+		/// <summary>
+		/// Gets or sets the progress. (Used for printing the progress)
+		/// </summary>
+		/// <value>The progress.</value>
 		private double Progress {get;  set;}
+		/// <summary>
+		/// Initializes a new instance of the <see cref="BRRT.PathOptimizer"/> class.
+		/// </summary>
+		/// <param name="_Path">Path.</param>
+		/// <param name="_Map">Map.</param>
+		/// <param name="_EndPoint">End point.</param>
 		public PathOptimizer (RRTPath _Path, Map _Map,RRTNode _EndPoint)
 		{
 			this.InternalMap = _Map;
-
 			this.Path = _Path;
 			this.Iterations = 500000;
 			this.MaximumDriftAngle = 10;
 			this.MinimumRadius = 20;
 			this.AllowedOrientationDeviation = 3;
-			this.MinimumDistance = 100;
+
 			this.StepWidthStraight = 7;
 			this.EndPoint = _EndPoint;
 			this.StepWidthEnd = 4;
-
 		}
+		/// <summary>
+		/// Start the path optimization.
+		/// </summary>
 		public void Optimize()
 		{
 			
@@ -42,6 +90,9 @@ namespace BRRT
 			//
 			//OptimizeCurves ();
 		}
+		/// <summary>
+		/// Optimize our path so we hit the endpoint
+		/// </summary>
 		public void OptimizeForEndPoint()
 		{
 			//Go along from then nearest point to the endpoint
@@ -112,6 +163,9 @@ namespace BRRT
 			Console.WriteLine ("Path length after optimization for endpoint: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
 
 		}
+		/// <summary>
+		/// Optimize or path by taking to points and check if we can connect them straight.
+		/// </summary>
 		public void OptimizeStraight()
 		{
 			double PreviousProgress = 0;
@@ -209,7 +263,9 @@ namespace BRRT
 			Path.CalculateLength();
 			Console.WriteLine ("Path length after opt: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
 		}
-		// Testimplementierung von Kurven&Drift Optimierung
+		/// <summary>
+		/// Optimize two points taken from the path by trying to connect them via a curve.
+		/// </summary>
 		public void OptimizeCurves()
 		{
 			//dh. abs(kurve/kurvemax) + abs(drift/driftmax) <=1 sein
@@ -306,16 +362,16 @@ namespace BRRT
 
 
 			}	
+			//Recalculate the path length (So the internal RRTPath variables are updated)
 			Path.CalculateLength();
 			Console.WriteLine ();
 			Console.WriteLine ("Path length after opt: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
 
 
 		}
-		private void ClearChildsTillNode(RRTNode baseNode, RRTNode endNode)
-		{
-
-		}
+		/// <summary>
+		/// Prints the progress.
+		/// </summary>
 		private void PrintProgress()
 		{
 			Console.SetCursorPosition (0, Console.CursorTop-1);

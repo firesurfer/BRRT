@@ -4,11 +4,14 @@ using System.Collections.Generic;
 
 namespace BRRT
 {
+	/// <summary>
+	/// Static helper functions.
+	/// </summary>
 	public static class RRTHelpers
 	{
 		static Random Randomizer = new Random (System.DateTime.Now.Millisecond);
-		public const int MaximumDistance = 400;
-		public const int MaximumCurveDistance = 300;
+
+	
 		public const double ToRadians = System.Math.PI / 180.0;
 		public const double ToDegree = 180.0 / System.Math.PI;
 
@@ -33,10 +36,10 @@ namespace BRRT
 		}
 
 		/// <summary>
-		/// Ask for a random value if the orientation should be used inverted. 
-		/// By playing with the reference value you can decide how often we want to try to drive backwards instead of forwards
+		/// Returns true if the random value is larger than then referenceValue. (0 -256). Passing 0 would mean to return always true. Passing 256 would mean to return alsways false.
 		/// </summary>
-		/// <returns><c>true</c>, if orientation was inverted, <c>false</c> otherwise.</returns>
+		/// <returns><c>true</c>, if referenceValue < RandomValue, <c>false</c> otherwise.</returns>
+		/// <param name="referenceValue">Reference value.</param>
 		public static bool BooleanRandom (int referenceValue)
 		{
 			if (Randomizer.Next (256) > referenceValue) {
@@ -51,7 +54,7 @@ namespace BRRT
 		/// <returns>The random straight point.</returns>
 		/// <param name="BaseNode">Base node.</param>
 		/// <param name="MaximumDrift">Maximum drift.</param>
-		public static RRTNode GetRandomStraightPoint (RRTNode BaseNode, double MaximumDrift, int InvertProbability)
+		public static RRTNode GetRandomStraightPoint (RRTNode BaseNode, double MaximumDrift, int InvertProbability, int MaximumDistance = 400)
 		{
 			double Distance = Randomizer.NextDouble () * MaximumDistance;
 			double Angle = (Randomizer.NextDouble () - 0.5) * 2 * MaximumDrift;
@@ -84,7 +87,7 @@ namespace BRRT
 		/// <param name="MinimumRadius">Minimum radius.</param>
 		/// <param name="_Distance">Distance.</param>
 		/// <param name="_Angle">Angle.</param>
-		public static RRTNode GetRandomCurvePoint (RRTNode BaseNode, double MinimumRadius, ref double _Distance, ref double _Angle, ref double _BaseAngle, ref Point _Middle, ref bool Left)
+		public static RRTNode GetRandomCurvePoint (RRTNode BaseNode, double MinimumRadius, ref double _Distance, ref double _Angle, ref double _BaseAngle, ref Point _Middle, ref bool Left, int MaximumCurveDistance = 300)
 		{
 			//Decide whether we want to have right or left turn
 			//True = left , Right = false
