@@ -115,10 +115,10 @@ namespace BRRT
 		public RRT(Map _Map)
 		{
 			this.InternalMap = _Map;
-			this.Iterations = 200000;
+			this.Iterations = 900000;
 			this.MaximumDrift = 20;
 			this.StepWidth = 7;
-			this.CircleStepWidth = 7;
+			this.CircleStepWidth = 6;
 			this.MinumumRadius = 20;
 			this.TargetArea = new Rectangle(0, 0,50, 50);
 			this.AcceptableOrientationDeviation = 4;

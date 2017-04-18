@@ -8,79 +8,87 @@ namespace BRRT
 		/// Gets or sets the maximum drift angle.
 		/// </summary>
 		/// <value>The maximum drift angle.</value>
-		public double MaximumDriftAngle{get;set;}
+		public double MaximumDriftAngle{ get; set; }
+
 		/// <summary>
 		/// Gets or sets the minimum radius.
 		/// </summary>
 		/// <value>The minimum radius.</value>
-		public double MinimumRadius{get;set;}
+		public double MinimumRadius{ get; set; }
+
 		/// <summary>
 		/// Gets or sets the amount of iterations.
 		/// </summary>
 		/// <value>The iterations.</value>
-		public UInt32 Iterations { get; set;}
+		public UInt32 Iterations { get; set; }
+
 		/// <summary>
 		/// Gets or sets the allowed orientation deviation.
 		/// The angle we accept between the orientation of two points in order to accept them.
 		/// </summary>
 		/// <value>The allowed orientation deviation.</value>
-		public double AllowedOrientationDeviation {get;set;}
+		public double AllowedOrientationDeviation { get; set; }
+
 		/// <summary>
 		/// Gets the resulting path.
 		/// </summary>
 		/// <value>The path.</value>
-		public RRTPath Path {get;private set;}
+		public RRTPath Path { get; private set; }
+
 		/// <summary>
 		/// Gets the step width straight.
 		/// </summary>
 		/// <value>The step width straight.</value>
-		public int StepWidthStraight { get; private set;}
+		public int StepWidthStraight { get; private set; }
+
 		/// <summary>
 		/// Gets the internal map the optimizer runs on.
 		/// </summary>
 		/// <value>The internal map.</value>
-		public Map InternalMap { get; private set;}
+		public Map InternalMap { get; private set; }
 
 		/// <summary>
 		/// Gets the end point. The point we want to navigate to
 		/// </summary>
 		/// <value>The end point.</value>
-		public RRTNode EndPoint { get; private set;}
+		public RRTNode EndPoint { get; private set; }
 
 		/// <summary>
 		/// Gets or sets the step width we use for optimizing our path towards the EndPoint.
 		/// </summary>
 		/// <value>The step width end.</value>
-		public double StepWidthEnd { get; set;}
+		public double StepWidthEnd { get; set; }
 
 		/// <summary>
 		/// Gets or sets the progress. (Used for printing the progress)
 		/// </summary>
 		/// <value>The progress.</value>
-		private double Progress {get;  set;}
+		private double Progress { get; set; }
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BRRT.PathOptimizer"/> class.
 		/// </summary>
 		/// <param name="_Path">Path.</param>
 		/// <param name="_Map">Map.</param>
 		/// <param name="_EndPoint">End point.</param>
-		public PathOptimizer (RRTPath _Path, Map _Map,RRTNode _EndPoint)
+		public PathOptimizer (RRTPath _Path, Map _Map, RRTNode _EndPoint)
 		{
 			this.InternalMap = _Map;
 			this.Path = _Path;
-			this.Iterations = 500000;
+			this.Iterations = 100000;
 			this.MaximumDriftAngle = 10;
 			this.MinimumRadius = 20;
-			this.AllowedOrientationDeviation = 3;
+			this.AllowedOrientationDeviation = 1;
 
 			this.StepWidthStraight = 7;
 			this.EndPoint = _EndPoint;
 			this.StepWidthEnd = 4;
 		}
+
 		/// <summary>
 		/// Start the path optimization.
 		/// </summary>
-		public void Optimize()
+		public void Optimize ()
 		{
 			
 			OptimizeForEndPoint ();
@@ -90,14 +98,15 @@ namespace BRRT
 			//
 			//OptimizeCurves ();
 		}
+
 		/// <summary>
 		/// Optimize our path so we hit the endpoint
 		/// </summary>
-		public void OptimizeForEndPoint()
+		public void OptimizeForEndPoint ()
 		{
 			//Go along from then nearest point to the endpoint
 			RRTNode previous = Path.Start;
-			Console.WriteLine ("Path length before optimization for endpoint: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
+			Console.WriteLine ("Path length before optimization for endpoint: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost ());
 			Console.WriteLine ();
 
 			while (previous != null) {
@@ -105,7 +114,7 @@ namespace BRRT
 				if (previous == null)
 					break;
 				//Check if the orientation of the selected point is nearly the same as the orientation of the endpoint
-				if (Math.Abs(previous.Orientation - EndPoint.Orientation) < AllowedOrientationDeviation*5) {
+				if (Math.Abs (previous.Orientation - EndPoint.Orientation) < AllowedOrientationDeviation * 5) {
 					//Okey connect them
 					RRTNode selectedNode = previous;
 					RRTNode lastNode = null;
@@ -113,7 +122,7 @@ namespace BRRT
 					RRTNode start = selectedNode.Clone ();
 					double Distance = RRTHelpers.CalculateDistance (selectedNode, EndPoint);
 					double angle = RRTHelpers.CalculateAngle (selectedNode, EndPoint);
-					if (RRTHelpers.SanatizeAngle(angle * RRTHelpers.ToDegree) > this.MaximumDriftAngle) {
+					if (Math.Abs(RRTHelpers.SanatizeAngle (angle * RRTHelpers.ToDegree)) > this.MaximumDriftAngle) {
 						previous = previous.Predecessor;
 						continue;
 					}
@@ -160,32 +169,34 @@ namespace BRRT
 
 			}
 			Path.CalculateLength ();
-			Console.WriteLine ("Path length after optimization for endpoint: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
+			Console.WriteLine ("Path length after optimization for endpoint: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost ());
 
 		}
+
 		/// <summary>
 		/// Optimize or path by taking to points and check if we can connect them straight.
 		/// </summary>
-		public void OptimizeStraight()
+		public void OptimizeStraight ()
 		{
 			double PreviousProgress = 0;
 
-			Console.WriteLine ("Path length before optimization: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
+			Console.WriteLine ("Path length before optimization: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost ());
 			Random random = new Random (System.DateTime.Now.Millisecond);
 			for (UInt32 it = 0; it < Iterations; it++) {
 
-				Progress = (int)(Math.Round(((double)it / (double)Iterations)*100));
+				Progress = (int)(Math.Round (((double)it / (double)Iterations) * 100));
 				if (Progress != PreviousProgress) {
 					PreviousProgress = Progress;
 					PrintProgress ();
 				}
 				//Select two random points
-				int indexNode1 = random.Next(1,Path.CountNodes-1);
-				RRTNode node1 = Path.SelectNode(indexNode1);
-				RRTNode node2 = Path.SelectNode (random.Next(1,indexNode1));
+				int indexNode1 = random.Next (50, Path.CountNodes - 1);
+				
+				RRTNode node1 = Path.SelectNode (indexNode1);
+				RRTNode node2 = Path.SelectNode (random.Next (1, indexNode1));
 
 				//Check if they have roughly the same orientation
-				if (Math.Abs(node1.Orientation - node2.Orientation )< AllowedOrientationDeviation) {
+				if (Math.Abs (node1.Orientation - node2.Orientation) < AllowedOrientationDeviation) {
 					//Calculate distance between points
 					double Distance = RRTHelpers.CalculateDistance (node1, node2);
 					if (Distance < 10)
@@ -194,18 +205,18 @@ namespace BRRT
 					double angle = RRTHelpers.CalculateAngle (node1, node2);
 					//Console.WriteLine ("Selected: " + node1 + " " + node2 + " Distance: " + Distance + " Angle: " + angle);
 
-					if (RRTHelpers.SanatizeAngle(angle * RRTHelpers.ToDegree) > this.MaximumDriftAngle)
+					if (Math.Abs (angle * RRTHelpers.ToDegree) > this.MaximumDriftAngle)
 						continue;
 					if (node1.Inverted != node2.Inverted)
 						continue;
 					RRTNode start = node1.Clone (); //new RRTNode(node1.Position,node1.Orientation, null);
-					RRTNode end = node2.Clone(); //new RRTNode (node2.Position, node2.Orientation, null);
+					RRTNode end = node2.Clone (); //new RRTNode (node2.Position, node2.Orientation, null);
 
 					RRTNode lastNode = null;
 					bool success = true;
 
 					//Connect them
-					for (double i = 0; i <= Distance; i+= StepWidthStraight) {
+					for (double i = 0; i <= Distance; i += StepWidthStraight) {
 						int NewX = (int)(start.Position.X + i * Math.Cos (angle));
 						int NewY = (int)(start.Position.Y + i * Math.Sin (angle));
 
@@ -246,8 +257,7 @@ namespace BRRT
 							node2.Successors [0].Predecessor = end;
 							node2.Predecessor = null;
 							node2.Successors.Clear ();
-						}
-						else
+						} else
 							Console.WriteLine ("Node2.Successor[0] was null");
 						node1.Successors.Clear ();
 						node2.Successors.Clear ();
@@ -258,50 +268,52 @@ namespace BRRT
 					}
 				}
 
+
 				
 			}
-			Path.CalculateLength();
-			Console.WriteLine ("Path length after opt: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
+			Path.CalculateLength ();
+			Console.WriteLine ("Path length after opt: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost ());
 		}
+
 		/// <summary>
 		/// Optimize two points taken from the path by trying to connect them via a curve.
 		/// </summary>
-		public void OptimizeCurves()
+		public void OptimizeCurves ()
 		{
 			//dh. abs(kurve/kurvemax) + abs(drift/driftmax) <=1 sein
 
 			double PreviousProgress = 0;
 
-			Console.WriteLine ("Path length before optimization: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
+			Console.WriteLine ("Path length before optimization: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost ());
 			Random random = new Random (System.DateTime.Now.Second);
 			for (UInt32 it = 0; it < Iterations; it++) {
 
-				Progress = (int)(Math.Round(((double)it / (double)Iterations)*100));
+				Progress = (int)(Math.Round (((double)it / (double)Iterations) * 100));
 				if (Progress != PreviousProgress) {
 					PreviousProgress = Progress;
 					PrintProgress ();
 				}
 				//Select two random points
-				int indexNode1 = random.Next(1,Path.CountNodes-1);
-				RRTNode node1 = Path.SelectNode(indexNode1);
-				RRTNode node2 = Path.SelectNode (random.Next(1,indexNode1));
+				int indexNode1 = random.Next (1, Path.CountNodes - 1);
+				RRTNode node1 = Path.SelectNode (indexNode1);
+				RRTNode node2 = Path.SelectNode (random.Next (1, indexNode1));
 
 				//Check that they have NOT the same orientation
-				if (Math.Abs(node1.Orientation - node2.Orientation ) > AllowedOrientationDeviation) {
+				if (Math.Abs (node1.Orientation - node2.Orientation) > AllowedOrientationDeviation) {
 					//Calculate distance between points
 					double Distance = RRTHelpers.CalculateDistance (node1, node2);
 					// TODO mindistance
-					if (Distance < MinimumRadius*2)
+					if (Distance < MinimumRadius * 2)
 						continue;
 					//Calculate angle between points
 					double angle = RRTHelpers.CalculateAngle (node1, node2);
 					//Console.WriteLine ("Selected: " + node1 + " " + node2 + " Distance: " + Distance + " Angle: " + angle);
 
-					if (RRTHelpers.SanatizeAngle(angle * RRTHelpers.ToDegree) > this.MaximumDriftAngle)
+					if (RRTHelpers.SanatizeAngle (angle * RRTHelpers.ToDegree) > this.MaximumDriftAngle)
 						continue;
 					if (node1.Inverted != node2.Inverted)
 						continue;
-					RRTNode start = new RRTNode(node1.Position,node1.Orientation, null);
+					RRTNode start = new RRTNode (node1.Position, node1.Orientation, null);
 					RRTNode end = new RRTNode (node2.Position, node2.Orientation, null);
 
 
@@ -309,7 +321,7 @@ namespace BRRT
 					bool success = true;
 
 					//Connect them
-					for (double i = 0; i <= Distance; i+= StepWidthStraight) {
+					for (double i = 0; i <= Distance; i += StepWidthStraight) {
 						int NewX = (int)(start.Position.X + i * Math.Cos (angle));
 						int NewY = (int)(start.Position.Y + i * Math.Sin (angle));
 
@@ -348,8 +360,7 @@ namespace BRRT
 							node2.Successors [0].Predecessor = end;
 							node2.Predecessor = null;
 							node2.Successors.Clear ();
-						}
-						else
+						} else
 							Console.WriteLine ("Node2.Successor[0] was null");
 						node1.Successors.Clear ();
 						node2.Successors.Clear ();
@@ -363,18 +374,19 @@ namespace BRRT
 
 			}	
 			//Recalculate the path length (So the internal RRTPath variables are updated)
-			Path.CalculateLength();
+			Path.CalculateLength ();
 			Console.WriteLine ();
-			Console.WriteLine ("Path length after opt: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost());
+			Console.WriteLine ("Path length after opt: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost ());
 
 
 		}
+
 		/// <summary>
 		/// Prints the progress.
 		/// </summary>
-		private void PrintProgress()
+		private void PrintProgress ()
 		{
-			Console.SetCursorPosition (0, Console.CursorTop-1);
+			Console.SetCursorPosition (0, Console.CursorTop - 1);
 
 			Console.WriteLine ("Progress optimizing: " + Progress + "%");
 
