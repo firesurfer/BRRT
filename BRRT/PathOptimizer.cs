@@ -340,17 +340,16 @@ namespace BRRT
 
 
 					Console.WriteLine ("Stepping to curve");
-					StepCurve (start, end, delta, new System.Drawing.Point ((int)midX, (int)midY), radius, angle);
+					StepCurve (start, end, delta, new System.Drawing.Point ((int)midX, (int)midY), radius, angle, theta);
 				}
 			}
 
 		}
-		private void StepCurve(RRTNode node1, RRTNode node2, double delta, System.Drawing.Point middle, double radius, double angle)
+		private void StepCurve(RRTNode node1, RRTNode node2, double delta, System.Drawing.Point middle, double radius, double angle, double theta)
 		{
 			double outerlength = Math.Abs (delta * RRTHelpers.ToRadians * radius);
 			double steps = outerlength / StepWidthCurve;
 			double angleStep = delta / steps;
-			double phi = RRTHelpers.SanatizeAngle (angle * RRTHelpers.ToDegree + Math.Sign (delta) * (180 - Math.Abs (delta)) / 2);
 
 			RRTNode start = node1.Clone (); 
 			RRTNode end = node2.Clone (); 
@@ -359,8 +358,8 @@ namespace BRRT
 			bool success = true;
 
 			for (int i = 0; i < (int)steps; i++) {
-				int NewX = (int)(middle.X + Math.Cos (RRTHelpers.SanatizeAngle (phi + i * angleStep)*RRTHelpers.ToRadians) * radius);
-				int NewY = (int)(middle.Y + Math.Sin (RRTHelpers.SanatizeAngle (phi + i * angleStep)*RRTHelpers.ToRadians) * radius);
+				int NewX = (int)(middle.X - Math.Cos (RRTHelpers.SanatizeAngle (theta + i * angleStep)*RRTHelpers.ToRadians) * radius);
+				int NewY = (int)(middle.Y - Math.Sin (RRTHelpers.SanatizeAngle (theta + i * angleStep)*RRTHelpers.ToRadians) * radius);
 				double NewOrientation = RRTHelpers.SanatizeAngle (node1.Orientation + i * angleStep);
 				if (InternalMap.IsOccupied (NewX, NewY)) {
 					success = false;
