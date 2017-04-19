@@ -306,6 +306,7 @@ namespace BRRT
 					continue;
 
 				//Now decide if going straight is way to go
+				//NOTE delta ist entweder sehr klein oder sehr groß (fast 360°, siehe Hilfsfunktion "anglesAreClose" in pseudocode)
 				if (Math.Abs (delta) < AllowedOrientationDeviation && Math.Abs(angle*RRTHelpers.ToRadians) < MaximumDriftAngle) {
 					//The deviation in the orientation is small enough we can accept going straight (or drift)
 					//And the angle between the points is smaller than the maximum drift we can do
