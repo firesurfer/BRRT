@@ -115,7 +115,7 @@ namespace BRRT
 		public RRT(Map _Map)
 		{
 			this.InternalMap = _Map;
-			this.Iterations = 900000;
+			this.Iterations = 100000;
 			this.MaximumDrift = 20;
 			this.StepWidth = 7;
 			this.CircleStepWidth = 6;
@@ -151,6 +151,7 @@ namespace BRRT
 			double PreviousProgress = 0;
 			GenerateStartLine ();
 			Console.WriteLine ();
+
 			for (UInt32 it = 0; it < Iterations; it++)
 			{
 				DoStep();
@@ -168,6 +169,7 @@ namespace BRRT
 			//TODO calculate distance
 			double Distance = 1000;
 
+		
 			for (int offset = (int)-MaximumDrift; offset < (int)MaximumDrift; offset++) {
 
 				RRTNode lastFound = null;

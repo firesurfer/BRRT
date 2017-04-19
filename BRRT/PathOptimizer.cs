@@ -1,5 +1,5 @@
 ﻿using System;
-
+using System.Drawing;
 namespace BRRT
 {
 	public class PathOptimizer
@@ -65,6 +65,9 @@ namespace BRRT
 		/// <value>The progress.</value>
 		private double Progress { get; set; }
 
+
+
+		public double StepWidthCurve{ get; set;}
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BRRT.PathOptimizer"/> class.
 		/// </summary>
@@ -75,7 +78,7 @@ namespace BRRT
 		{
 			this.InternalMap = _Map;
 			this.Path = _Path;
-			this.Iterations = 100000;
+			this.Iterations = 10;
 			this.MaximumDriftAngle = 10;
 			this.MinimumRadius = 20;
 			this.AllowedOrientationDeviation = 1;
@@ -83,6 +86,7 @@ namespace BRRT
 			this.StepWidthStraight = 7;
 			this.EndPoint = _EndPoint;
 			this.StepWidthEnd = 4;
+			this.StepWidthCurve = 5;
 		}
 
 		/// <summary>
@@ -90,13 +94,13 @@ namespace BRRT
 		/// </summary>
 		public void Optimize ()
 		{
-			
-			OptimizeForEndPoint ();
-			OptimizeStraight ();
-			OptimizeForEndPoint ();
+			Console.WriteLine ("Optimizing:");
+			//OptimizeForEndPoint ();
+			//OptimizeStraight ();
+			//OptimizeForEndPoint ();
 
 			//
-			//OptimizeCurves ();
+			OptimizeCurves ();
 		}
 
 		/// <summary>
@@ -280,104 +284,202 @@ namespace BRRT
 		/// </summary>
 		public void OptimizeCurves ()
 		{
-			//dh. abs(kurve/kurvemax) + abs(drift/driftmax) <=1 sein
-
-			double PreviousProgress = 0;
-
 			Console.WriteLine ("Path length before optimization: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost ());
-			Random random = new Random (System.DateTime.Now.Second);
+			Random random = new Random (System.DateTime.Now.Millisecond);
 			for (UInt32 it = 0; it < Iterations; it++) {
-
-				Progress = (int)(Math.Round (((double)it / (double)Iterations) * 100));
-				if (Progress != PreviousProgress) {
-					PreviousProgress = Progress;
-					PrintProgress ();
-				}
+				RRTNode start;
+				RRTNode end;
 				//Select two random points
-				int indexNode1 = random.Next (1, Path.CountNodes - 1);
-				RRTNode node1 = Path.SelectNode (indexNode1);
-				RRTNode node2 = Path.SelectNode (random.Next (1, indexNode1));
+				SelectPoints (random, out start,out  end);
+				//Calculate distance
+				double distance = RRTHelpers.CalculateDistance(start,end);
+				//Distance is too small that it makes sense to optimize it
+				if (distance < 10)
+					continue;
+				//Calculate angle delta (angle between orientations) (in degrees)
+				double delta = end.Orientation - start.Orientation;
+				//Calculate angle between points (in radians)
+				double angle = RRTHelpers.CalculateAngle(start,end);
 
-				//Check that they have NOT the same orientation
-				if (Math.Abs (node1.Orientation - node2.Orientation) > AllowedOrientationDeviation) {
-					//Calculate distance between points
-					double Distance = RRTHelpers.CalculateDistance (node1, node2);
-					// TODO mindistance
-					if (Distance < MinimumRadius * 2)
+				//We can't go from inverted to not inverted (not from forward to backwards or the other way round)
+				if (start.Inverted != end.Inverted)
+					continue;
+
+				//Now decide if going straight is way to go
+				if (Math.Abs (delta) < AllowedOrientationDeviation && Math.Abs(angle*RRTHelpers.ToRadians) < MaximumDriftAngle) {
+					//The deviation in the orientation is small enough we can accept going straight (or drift)
+					//And the angle between the points is smaller than the maximum drift we can do
+
+
+					//Step straight or in a drift. This function may manipulate the path
+					//StepStraight (start, end, distance, angle);
+				} else {
+					//We try a curve
+
+
+					double theta = RRTHelpers.SanatizeAngle (angle*RRTHelpers.ToDegree - Math.Sign (delta) * (180 - Math.Abs (delta)) / 2)*RRTHelpers.ToRadians;
+					double radius = Math.Abs (distance / (2 * Math.Sin (delta*RRTHelpers.ToRadians / 2)));
+					//Check if the radius is > minimum radius
+					if (radius < MinimumRadius)
 						continue;
-					//Calculate angle between points
-					double angle = RRTHelpers.CalculateAngle (node1, node2);
-					//Console.WriteLine ("Selected: " + node1 + " " + node2 + " Distance: " + Distance + " Angle: " + angle);
 
-					if (RRTHelpers.SanatizeAngle (angle * RRTHelpers.ToDegree) > this.MaximumDriftAngle)
+					//Calculate middle point
+					double midX = end.Position.X + Math.Cos(theta) * radius;
+					double midY = end.Position.Y + Math.Sin(theta) * radius;
+
+					RRTHelpers.DrawImportantNode (new RRTNode (new System.Drawing.Point ((int)midX, (int)midY), theta, null), InternalMap, 5, System.Drawing.Color.DarkMagenta);
+					double gamma = end.Orientation - RRTHelpers.SanatizeAngle (theta - Math.Sign (delta) * 90);
+
+					double driftAngle = gamma;
+					double curveRadius = delta / radius;
+
+					if (driftAngle / MaximumDriftAngle +   MinimumRadius/ curveRadius >= 1)
 						continue;
-					if (node1.Inverted != node2.Inverted)
-						continue;
-					RRTNode start = new RRTNode (node1.Position, node1.Orientation, null);
-					RRTNode end = new RRTNode (node2.Position, node2.Orientation, null);
 
 
-					RRTNode lastNode = null;
-					bool success = true;
+					Console.WriteLine ("Stepping to curve");
+					StepCurve (start, end, delta, new System.Drawing.Point ((int)midX, (int)midY), radius, angle);
+				}
+			}
 
-					//Connect them
-					for (double i = 0; i <= Distance; i += StepWidthStraight) {
-						int NewX = (int)(start.Position.X + i * Math.Cos (angle));
-						int NewY = (int)(start.Position.Y + i * Math.Sin (angle));
+		}
+		private void StepCurve(RRTNode node1, RRTNode node2, double delta, System.Drawing.Point middle, double radius, double angle)
+		{
+			double outerlength = Math.Abs (delta * RRTHelpers.ToRadians * radius);
+			double steps = outerlength / StepWidthCurve;
+			double angleStep = delta / steps;
+			double phi = RRTHelpers.SanatizeAngle (angle * RRTHelpers.ToDegree + Math.Sign (delta) * (180 - Math.Abs (delta)) / 2);
 
-						if (InternalMap.IsOccupied (NewX, NewY)) {
-							success = false;
-							break;
-						}
+			RRTNode start = node1.Clone (); 
+			RRTNode end = node2.Clone (); 
 
-						RRTNode newNode = null;
-						if (lastNode == null) {
-							newNode = new RRTNode (new System.Drawing.Point (NewX, NewY), node1.Orientation, start);
-							start.Successors.Add (newNode);
-						} else {
-							newNode = new RRTNode (new System.Drawing.Point (NewX, NewY), node1.Orientation, lastNode);
-							lastNode.Successors.Add (newNode);
-						}
-						lastNode = newNode;
-					}
-					if (lastNode == null)
-						success = false;
+			RRTNode lastNode = null;
+			bool success = true;
 
-					//We successfully connected them
-					if (success) {
-						end.Predecessor = lastNode;
-						lastNode.AddSucessor (end);
-						if (node1.Predecessor != null) {
-							node1.Predecessor.Successors.Clear ();
-							node1.Predecessor.AddSucessor (start);
-
-							start.Predecessor = node1.Predecessor;
-						} else
-							Console.WriteLine ("Node1.Predecessor was null");
-
-						if (node2.Successors.Count > 0) {
-							end.AddSucessor (node2.Successors [0]);
-							node2.Successors [0].Predecessor = end;
-							node2.Predecessor = null;
-							node2.Successors.Clear ();
-						} else
-							Console.WriteLine ("Node2.Successor[0] was null");
-						node1.Successors.Clear ();
-						node2.Successors.Clear ();
-						node2.Predecessor = null;
-						node1.Predecessor = null;
-						Path.CalculateLength ();
-
-					}
+			for (int i = 0; i < (int)steps; i++) {
+				int NewX = (int)(middle.X + Math.Cos (RRTHelpers.SanatizeAngle (phi + i * angleStep)*RRTHelpers.ToRadians) * radius);
+				int NewY = (int)(middle.Y + Math.Sin (RRTHelpers.SanatizeAngle (phi + i * angleStep)*RRTHelpers.ToRadians) * radius);
+				double NewOrientation = RRTHelpers.SanatizeAngle (node1.Orientation + i * angleStep);
+				if (InternalMap.IsOccupied (NewX, NewY)) {
+					success = false;
+					break;
 				}
 
+				RRTNode newNode = null;
+				if (lastNode == null) {
+					newNode = new RRTNode (new System.Drawing.Point (NewX, NewY),NewOrientation, start);
+					newNode.Inverted = start.Inverted;
+					start.Successors.Add (newNode);
+				} else {
+					newNode = new RRTNode (new System.Drawing.Point (NewX, NewY), NewOrientation, lastNode);
+					lastNode.Successors.Add (newNode);
+					newNode.Inverted = lastNode.Inverted;
+					//RRTHelpers.DrawImportantNode (newNode, InternalMap, 5, Color.DarkOrange);
+				}
+				lastNode = newNode;
+			}
 
-			}	
-			//Recalculate the path length (So the internal RRTPath variables are updated)
-			Path.CalculateLength ();
-			Console.WriteLine ();
-			Console.WriteLine ("Path length after opt: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost ());
+			if (lastNode == null)
+				success = false;
 
+			//We successfully connected them
+			if (success) {
+				end.Predecessor = lastNode;
+				lastNode.AddSucessor (end);
+				if (node1.Predecessor != null) {
+					node1.Predecessor.Successors.Clear ();
+					node1.Predecessor.AddSucessor (start);
+
+					start.Predecessor = node1.Predecessor;
+				} else
+					Console.WriteLine ("Node1.Predecessor was null");
+
+				if (node2.Successors.Count > 0) {
+					end.AddSucessor (node2.Successors [0]);
+					node2.Successors [0].Predecessor = end;
+					node2.Predecessor = null;
+					node2.Successors.Clear ();
+				} else
+					Console.WriteLine ("Node2.Successor[0] was null");
+				node1.Successors.Clear ();
+				node2.Successors.Clear ();
+				node2.Predecessor = null;
+				node1.Predecessor = null;
+				Path.CalculateLength ();
+
+			}
+
+
+		}
+		private void StepStraight(RRTNode node1, RRTNode node2, double Distance, double Angle)
+		{
+			RRTNode start = node1.Clone (); 
+			RRTNode end = node2.Clone (); 
+
+			RRTNode lastNode = null;
+			bool success = true;
+
+			//Connect them
+			for (double i = 0; i <= Distance; i += StepWidthStraight) {
+				int NewX = (int)(start.Position.X + i * Math.Cos (Angle));
+				int NewY = (int)(start.Position.Y + i * Math.Sin (Angle));
+
+				if (InternalMap.IsOccupied (NewX, NewY)) {
+					success = false;
+					break;
+				}
+
+				RRTNode newNode = null;
+				if (lastNode == null) {
+					newNode = new RRTNode (new System.Drawing.Point (NewX, NewY), node1.Orientation, start);
+					newNode.Inverted = start.Inverted;
+					start.Successors.Add (newNode);
+				} else {
+					newNode = new RRTNode (new System.Drawing.Point (NewX, NewY), node1.Orientation, lastNode);
+					lastNode.Successors.Add (newNode);
+					newNode.Inverted = lastNode.Inverted;
+				}
+				lastNode = newNode;
+			}
+			if (lastNode == null)
+				success = false;
+
+			//We successfully connected them
+			if (success) {
+				end.Predecessor = lastNode;
+				lastNode.AddSucessor (end);
+				if (node1.Predecessor != null) {
+					node1.Predecessor.Successors.Clear ();
+					node1.Predecessor.AddSucessor (start);
+
+					start.Predecessor = node1.Predecessor;
+				} else
+					Console.WriteLine ("Node1.Predecessor was null");
+
+				if (node2.Successors.Count > 0) {
+					end.AddSucessor (node2.Successors [0]);
+					node2.Successors [0].Predecessor = end;
+					node2.Predecessor = null;
+					node2.Successors.Clear ();
+				} else
+					Console.WriteLine ("Node2.Successor[0] was null");
+				node1.Successors.Clear ();
+				node2.Successors.Clear ();
+				node2.Predecessor = null;
+				node1.Predecessor = null;
+				Path.CalculateLength ();
+
+			}
+		
+		}
+
+		private void SelectPoints(Random random, out RRTNode node1, out RRTNode node2)
+		{
+			//Select two random points
+			int indexNode1 = random.Next (50, Path.CountNodes - 1);
+
+			node1 = Path.SelectNode (indexNode1);
+			node2 = Path.SelectNode (random.Next (1, indexNode1));
 
 		}
 
