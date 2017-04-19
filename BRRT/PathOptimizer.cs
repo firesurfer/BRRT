@@ -78,7 +78,7 @@ namespace BRRT
 		{
 			this.InternalMap = _Map;
 			this.Path = _Path;
-			this.Iterations = 10;
+			this.Iterations = 15;
 			this.MaximumDriftAngle = 10;
 			this.MinimumRadius = 20;
 			this.AllowedOrientationDeviation = 1;
@@ -307,7 +307,7 @@ namespace BRRT
 
 				//Now decide if going straight is way to go
 				//NOTE delta ist entweder sehr klein oder sehr groß (fast 360°, siehe Hilfsfunktion "anglesAreClose" in pseudocode)
-				if (Math.Abs (delta) < AllowedOrientationDeviation && Math.Abs(angle*RRTHelpers.ToRadians) < MaximumDriftAngle) {
+				if (Math.Abs (delta) < AllowedOrientationDeviation && Math.Abs(angle*RRTHelpers.ToDegree) < MaximumDriftAngle) {
 					//The deviation in the orientation is small enough we can accept going straight (or drift)
 					//And the angle between the points is smaller than the maximum drift we can do
 
@@ -324,22 +324,22 @@ namespace BRRT
 					if (radius < MinimumRadius)
 						continue;
 
-					//Calculate middle point
+					//Calculate middle point (theta is in radians)
 					double midX = start.Position.X + Math.Cos(theta) * radius;
 					double midY = start.Position.Y + Math.Sin(theta) * radius;
 
 					RRTHelpers.DrawImportantNode (new RRTNode (new System.Drawing.Point ((int)midX, (int)midY), theta, null), InternalMap, 5, System.Drawing.Color.DarkMagenta);
+					//Theta in radians, delta in degrees -> gamma in degrees
 					double gamma = start.Orientation - RRTHelpers.SanatizeAngle (theta*RRTHelpers.ToDegree - Math.Sign (delta) * 90);
 
 					double driftAngle = gamma; //In degree
-					double curveRadius = delta / radius; //In degree per meter
 
-                    //NOTE Hier stimmte noch was nicht. MinimumRadius/curveRadius hatte noch Einheiten => statt curveRadius nur radius verwenden. Würde man die tatsächlichen Krümmungen einsetzen, würde sich das delta sowieso rauskürzen
-                    if (driftAngle*RRTHelpers.ToRadians / MaximumDriftAngle + MinimumRadius/ radius >= 1)
+                    
+                    if (driftAngle / MaximumDriftAngle + MinimumRadius/ radius >= 1)
 						continue;
 
 
-					Console.WriteLine ("Stepping to curve");
+					Console.WriteLine ("Stepping curve");
 					StepCurve (start, end, delta, new System.Drawing.Point ((int)midX, (int)midY), radius, angle, theta);
 				}
 			}
