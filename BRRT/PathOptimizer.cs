@@ -318,23 +318,24 @@ namespace BRRT
 					//We try a curve
 
 
-					double theta = RRTHelpers.SanatizeAngle (angle*RRTHelpers.ToDegree - Math.Sign (delta) * (180 - Math.Abs (delta)) / 2)*RRTHelpers.ToRadians;
+					double theta = RRTHelpers.SanatizeAngle (angle*RRTHelpers.ToDegree + Math.Sign (delta) * (180 - Math.Abs (delta)) / 2)*RRTHelpers.ToRadians;
 					double radius = Math.Abs (distance / (2 * Math.Sin (delta*RRTHelpers.ToRadians / 2)));
 					//Check if the radius is > minimum radius
 					if (radius < MinimumRadius)
 						continue;
 
 					//Calculate middle point
-					double midX = end.Position.X + Math.Cos(theta) * radius;
-					double midY = end.Position.Y + Math.Sin(theta) * radius;
+					double midX = start.Position.X + Math.Cos(theta) * radius;
+					double midY = start.Position.Y + Math.Sin(theta) * radius;
 
 					RRTHelpers.DrawImportantNode (new RRTNode (new System.Drawing.Point ((int)midX, (int)midY), theta, null), InternalMap, 5, System.Drawing.Color.DarkMagenta);
-					double gamma = end.Orientation - RRTHelpers.SanatizeAngle (theta - Math.Sign (delta) * 90);
+					double gamma = start.Orientation - RRTHelpers.SanatizeAngle (theta*RRTHelpers.ToDegree - Math.Sign (delta) * 90);
 
-					double driftAngle = gamma;
-					double curveRadius = delta / radius;
+					double driftAngle = gamma; //In degree
+					double curveRadius = delta / radius; //In degree per meter
 
-					if (driftAngle / MaximumDriftAngle +   MinimumRadius/ curveRadius >= 1)
+                    //NOTE Hier stimmte noch was nicht. MinimumRadius/curveRadius hatte noch Einheiten => statt curveRadius nur radius verwenden. Würde man die tatsächlichen Krümmungen einsetzen, würde sich das delta sowieso rauskürzen
+                    if (driftAngle*RRTHelpers.ToRadians / MaximumDriftAngle + MinimumRadius/ radius >= 1)
 						continue;
 
 
