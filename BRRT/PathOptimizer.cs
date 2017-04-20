@@ -78,15 +78,15 @@ namespace BRRT
 		{
 			this.InternalMap = _Map;
 			this.Path = _Path;
-			this.Iterations = 15;
+			this.Iterations = 550000;
 			this.MaximumDriftAngle = 10;
 			this.MinimumRadius = 20;
-			this.AllowedOrientationDeviation = 1;
+			this.AllowedOrientationDeviation = 3;
 
-			this.StepWidthStraight = 7;
+			this.StepWidthStraight = 10;
 			this.EndPoint = _EndPoint;
 			this.StepWidthEnd = 4;
-			this.StepWidthCurve = 5;
+			this.StepWidthCurve = 8;
 		}
 
 		/// <summary>
@@ -95,6 +95,11 @@ namespace BRRT
 		public void Optimize ()
 		{
 			Console.WriteLine ("Optimizing:");
+			//Add endpoint to path
+			this.Path.Start.AddSucessor (EndPoint);
+			this.EndPoint.Predecessor = this.Path.Start;
+			this.Path.Start = EndPoint;
+
 			//OptimizeForEndPoint ();
 			//OptimizeStraight ();
 			//OptimizeForEndPoint ();
@@ -177,107 +182,7 @@ namespace BRRT
 
 		}
 
-		/// <summary>
-		/// Optimize or path by taking to points and check if we can connect them straight.
-		/// </summary>
-		public void OptimizeStraight ()
-		{
-			double PreviousProgress = 0;
 
-			Console.WriteLine ("Path length before optimization: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost ());
-			Random random = new Random (System.DateTime.Now.Millisecond);
-			for (UInt32 it = 0; it < Iterations; it++) {
-
-				Progress = (int)(Math.Round (((double)it / (double)Iterations) * 100));
-				if (Progress != PreviousProgress) {
-					PreviousProgress = Progress;
-					PrintProgress ();
-				}
-				//Select two random points
-				int indexNode1 = random.Next (50, Path.CountNodes - 1);
-				
-				RRTNode node1 = Path.SelectNode (indexNode1);
-				RRTNode node2 = Path.SelectNode (random.Next (1, indexNode1));
-
-				//Check if they have roughly the same orientation
-				if (Math.Abs (node1.Orientation - node2.Orientation) < AllowedOrientationDeviation) {
-					//Calculate distance between points
-					double Distance = RRTHelpers.CalculateDistance (node1, node2);
-					if (Distance < 10)
-						continue;
-					//Calculate angle between points
-					double angle = RRTHelpers.CalculateAngle (node1, node2);
-					//Console.WriteLine ("Selected: " + node1 + " " + node2 + " Distance: " + Distance + " Angle: " + angle);
-
-					if (Math.Abs (angle * RRTHelpers.ToDegree) > this.MaximumDriftAngle)
-						continue;
-					if (node1.Inverted != node2.Inverted)
-						continue;
-					RRTNode start = node1.Clone (); //new RRTNode(node1.Position,node1.Orientation, null);
-					RRTNode end = node2.Clone (); //new RRTNode (node2.Position, node2.Orientation, null);
-
-					RRTNode lastNode = null;
-					bool success = true;
-
-					//Connect them
-					for (double i = 0; i <= Distance; i += StepWidthStraight) {
-						int NewX = (int)(start.Position.X + i * Math.Cos (angle));
-						int NewY = (int)(start.Position.Y + i * Math.Sin (angle));
-
-						if (InternalMap.IsOccupied (NewX, NewY)) {
-							success = false;
-							break;
-						}
-
-						RRTNode newNode = null;
-						if (lastNode == null) {
-							newNode = new RRTNode (new System.Drawing.Point (NewX, NewY), node1.Orientation, start);
-							newNode.Inverted = start.Inverted;
-							start.Successors.Add (newNode);
-						} else {
-							newNode = new RRTNode (new System.Drawing.Point (NewX, NewY), node1.Orientation, lastNode);
-							lastNode.Successors.Add (newNode);
-							newNode.Inverted = lastNode.Inverted;
-						}
-						lastNode = newNode;
-					}
-					if (lastNode == null)
-						success = false;
-
-					//We successfully connected them
-					if (success) {
-						end.Predecessor = lastNode;
-						lastNode.AddSucessor (end);
-						if (node1.Predecessor != null) {
-							node1.Predecessor.Successors.Clear ();
-							node1.Predecessor.AddSucessor (start);
-
-							start.Predecessor = node1.Predecessor;
-						} else
-							Console.WriteLine ("Node1.Predecessor was null");
-
-						if (node2.Successors.Count > 0) {
-							end.AddSucessor (node2.Successors [0]);
-							node2.Successors [0].Predecessor = end;
-							node2.Predecessor = null;
-							node2.Successors.Clear ();
-						} else
-							Console.WriteLine ("Node2.Successor[0] was null");
-						node1.Successors.Clear ();
-						node2.Successors.Clear ();
-						node2.Predecessor = null;
-						node1.Predecessor = null;
-						Path.CalculateLength ();
-					
-					}
-				}
-
-
-				
-			}
-			Path.CalculateLength ();
-			Console.WriteLine ("Path length after opt: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost ());
-		}
 
 		/// <summary>
 		/// Optimize two points taken from the path by trying to connect them via a curve.
@@ -289,8 +194,21 @@ namespace BRRT
 			for (UInt32 it = 0; it < Iterations; it++) {
 				RRTNode start;
 				RRTNode end;
-				//Select two random points
-				SelectPoints (random, out start,out  end);
+
+				//Force end point optimisation
+				if (it < Path.CountNodes) {
+					start = EndPoint;
+					end = Path.SelectNode ((int)it);
+				} else if (Iterations > 10000 && it < 10000) {
+					start = EndPoint;
+					if (Path.CountNodes > 100)
+						end = Path.SelectNode (random.Next (Path.CountNodes - 100, Path.CountNodes - 1));
+					else
+						end = Path.SelectNode (random.Next (1, Path.CountNodes - 1));
+				} else {
+					//Select two random points
+					SelectPoints (random, out start, out  end);
+				}
 				//Calculate distance
 				double distance = RRTHelpers.CalculateDistance(start,end);
 				//Distance is too small that it makes sense to optimize it
@@ -307,13 +225,15 @@ namespace BRRT
 
 				//Now decide if going straight is way to go
 				//NOTE delta ist entweder sehr klein oder sehr groß (fast 360°, siehe Hilfsfunktion "anglesAreClose" in pseudocode)
-				if (Math.Abs (delta) < AllowedOrientationDeviation && Math.Abs(angle*RRTHelpers.ToDegree) < MaximumDriftAngle) {
+				if(AnglesAreClose(delta,0, AllowedOrientationDeviation)&&  Math.Abs(start.Orientation-angle*RRTHelpers.ToDegree) < MaximumDriftAngle)
+				//if (Math.Abs (delta) < AllowedOrientationDeviation*5 && Math.Abs(angle*RRTHelpers.ToDegree) < MaximumDriftAngle)
+				{
 					//The deviation in the orientation is small enough we can accept going straight (or drift)
 					//And the angle between the points is smaller than the maximum drift we can do
 
 
 					//Step straight or in a drift. This function may manipulate the path
-					//StepStraight (start, end, distance, angle);
+					StepStraight (start, end, distance, angle);
 				} else {
 					//We try a curve
 
@@ -328,21 +248,23 @@ namespace BRRT
 					double midX = start.Position.X + Math.Cos(theta) * radius;
 					double midY = start.Position.Y + Math.Sin(theta) * radius;
 
-					RRTHelpers.DrawImportantNode (new RRTNode (new System.Drawing.Point ((int)midX, (int)midY), theta, null), InternalMap, 5, System.Drawing.Color.DarkMagenta);
+					//RRTHelpers.DrawImportantNode (new RRTNode (new System.Drawing.Point ((int)midX, (int)midY), theta, null), InternalMap, 5, System.Drawing.Color.DarkMagenta);
 					//Theta in radians, delta in degrees -> gamma in degrees
 					double gamma = start.Orientation - RRTHelpers.SanatizeAngle (theta*RRTHelpers.ToDegree - Math.Sign (delta) * 90);
 
 					double driftAngle = gamma; //In degree
 
                     
-                    if (driftAngle / MaximumDriftAngle + MinimumRadius/ radius >= 1)
+					if (Math.Abs(driftAngle) / MaximumDriftAngle + MinimumRadius/ radius >= 1)
 						continue;
 
 
-					Console.WriteLine ("Stepping curve");
+
 					StepCurve (start, end, delta, new System.Drawing.Point ((int)midX, (int)midY), radius, angle, theta);
 				}
 			}
+			Path.CalculateLength ();
+			Console.WriteLine ("Path length after opt: " + Path.Length + " Count: " + Path.CountNodes + " Cost: " + Path.Cost ());
 
 		}
 		private void StepCurve(RRTNode node1, RRTNode node2, double delta, System.Drawing.Point middle, double radius, double angle, double theta)
@@ -493,6 +415,15 @@ namespace BRRT
 
 			Console.WriteLine ("Progress optimizing: " + Progress + "%");
 
+		}
+		private bool AnglesAreClose(double angle1, double angle2, double tolerance)
+		{
+			if (Math.Abs(angle1-angle2) < tolerance)
+				return true;
+			if (360 - RRTHelpers.SanatizeAngle (angle1 - angle2) < tolerance)
+				return true;
+			return false;
+					
 		}
 	}
 }
