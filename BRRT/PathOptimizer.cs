@@ -358,8 +358,8 @@ namespace BRRT
 			bool success = true;
 
 			for (int i = 0; i < (int)steps; i++) {
-				int NewX = (int)(middle.X - Math.Cos (RRTHelpers.SanatizeAngle (theta + i * angleStep)*RRTHelpers.ToRadians) * radius);
-				int NewY = (int)(middle.Y - Math.Sin (RRTHelpers.SanatizeAngle (theta + i * angleStep)*RRTHelpers.ToRadians) * radius);
+				int NewX = (int)(middle.X - Math.Cos (RRTHelpers.SanatizeAngle (theta*RRTHelpers.ToDegree + i * angleStep)*RRTHelpers.ToRadians) * radius);
+				int NewY = (int)(middle.Y - Math.Sin (RRTHelpers.SanatizeAngle (theta*RRTHelpers.ToDegree + i * angleStep)*RRTHelpers.ToRadians) * radius);
 				double NewOrientation = RRTHelpers.SanatizeAngle (node1.Orientation + i * angleStep);
 				if (InternalMap.IsOccupied (NewX, NewY)) {
 					success = false;
