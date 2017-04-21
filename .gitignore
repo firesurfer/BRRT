@@ -1,6 +1,6 @@
 /packages
 *.exe
-
+*.userprefs
 # Autosave files
 
 *~

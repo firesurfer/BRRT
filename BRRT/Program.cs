@@ -44,16 +44,20 @@ namespace BRRT
 				}
 				//In case the map exists
 				if (File.Exists (MapPath)) {
+					//Stopwatch for timing
+					Stopwatch watch = new Stopwatch();
+					watch.Start();
 					//Load bitmap 
 					Bitmap BitMap = ImageHelpers.CreateNonIndexedImage( new Bitmap (MapPath));
 
 					//Create new map from bitmap
 					Map MyMap = new Map (BitMap);
-
+					watch.Stop();
+					Console.WriteLine("Loading Map took: " + watch.ElapsedMilliseconds + " ms");
+					watch.Reset();
 					//Create new instance of algorithm
 					RRT Algorithm = new RRT(MyMap);
-					//Stopwatch for timing
-					Stopwatch watch = new Stopwatch();
+
 
 					//Callback (lambda function) when the rrt algorithm has finished
 					Algorithm.Finished += (object sender, EventArgs e) =>{
@@ -63,8 +67,12 @@ namespace BRRT
 						//Event that gets called when the RRT is finished
 						Console.WriteLine("Finished");
 
+						watch.Reset();
+						watch.Start();
 						//Look for paths from the endpoint to the start
 						List<RRTPath> paths = Algorithm.FindPathToTarget();
+						watch.Stop();
+						Console.WriteLine("Finding path took: " + watch.ElapsedMilliseconds + " ms");
 
 						//In case we found a path
 						if(paths.Count > 0)
@@ -118,8 +126,12 @@ namespace BRRT
 						Console.WriteLine("Drawing took: " + watch.ElapsedMilliseconds + " ms");
 						if (paths.Count >0) 
 						{
+							watch.Reset();
+							watch.Start();
 							//Save the result
 							MyMap.SaveBitmapToFile(outputPath);
+							watch.Stop();
+							Console.WriteLine("Saving result to image took: " + watch.ElapsedMilliseconds + " ms");
 						}
 					};
 					//Start the RRT

@@ -115,12 +115,12 @@ namespace BRRT
 		public RRT(Map _Map)
 		{
 			this.InternalMap = _Map;
-			this.Iterations = 200000;
+			this.Iterations = 100000;
 			this.MaximumDrift = 20;
 			this.StepWidth = 10;
 			this.CircleStepWidth = 7;
 			this.MinumumRadius = 20;
-			this.TargetArea = new Rectangle(0, 0,50, 50);
+			this.TargetArea = new Rectangle(0, 0,25, 25);
 			this.AcceptableOrientationDeviation = 4;
 			this.PreferStraight = 160;
 			this.StraightInvertProbability = 125;
@@ -228,7 +228,7 @@ namespace BRRT
 			RRTNode RandomNode = RRTHelpers.SelectRandomNode(AllNodes);
 
 			//large value -> don' take nearest so often
-			bool SelectNearest = RRTHelpers.BooleanRandom (150);
+			bool SelectNearest = RRTHelpers.BooleanRandom (130);
 			if (SelectNearest) {
 				//Take from 10 nodes the node that is the nearest to the endpoint
 				double bestDistance = RRTHelpers.CalculateDistance (RandomNode, EndRRTNode);
@@ -406,7 +406,10 @@ namespace BRRT
 		public List<RRTPath> FindPathToTarget()
 		{
 			//Move area around the endpoint
-			Rectangle TranslatedTargetArea = new Rectangle(EndPoint.X - TargetArea.Width / 2, EndPoint.Y - TargetArea.Height / 2, TargetArea.Width, TargetArea.Height);
+			Rectangle TranslatedTargetArea = new Rectangle(EndPoint.X - TargetArea.Width / 2, EndPoint.Y + TargetArea.Height / 2, TargetArea.Width, TargetArea.Height);
+			Graphics g = Graphics.FromImage(InternalMap.ImageMap);
+
+			g.DrawRectangle(Pens.Fuchsia, new Rectangle(InternalMap.ToMapCoordinates(TranslatedTargetArea.Location), TranslatedTargetArea.Size));
 
 			List<RRTNode> NodesInTargetArea = new List<RRTNode>();
 			List<RRTPath> Paths = new List<RRTPath>();
@@ -415,11 +418,14 @@ namespace BRRT
 			foreach (var item in AllNodes)
 			{
 				//Check if the rectangle contains the point and check the orientation
-				if (TranslatedTargetArea.Contains(item.Position) && Math.Abs(item.Orientation - EndRRTNode.Orientation) < AcceptableOrientationDeviation)
+				if ( Math.Abs(item.Orientation - EndRRTNode.Orientation) < AcceptableOrientationDeviation)
 				{
-					//Add to the list of found nodes.
-					NodesInTargetArea.Add(item);
-					Console.WriteLine("Found node in target area: " + item);
+					if ((Math.Abs(EndPoint.X - item.Position.X) < TargetArea.Width / 2) && (Math.Abs(EndPoint.Y - item.Position.Y) < TargetArea.Height / 2))
+					{
+						//Add to the list of found nodes.
+						NodesInTargetArea.Add(item);
+						Console.WriteLine("Found node in target area: " + item);
+					}
 				}
 			}
 			//In case no point was found return
@@ -445,7 +451,8 @@ namespace BRRT
 				{
 					if (previous.Predecessor != null) {
 						//TODO replace with RRTHelpers.CalculateDistance
-						length += Math.Sqrt (Math.Pow (previous.Position.X - previous.Predecessor.Position.X, 2) + Math.Pow (previous.Position.Y - previous.Predecessor.Position.Y, 2));
+						length += RRTHelpers.CalculateDistance(previous, previous.Predecessor);
+						//length += Math.Sqrt (Math.Pow (previous.Position.X - previous.Predecessor.Position.X, 2) + Math.Pow (previous.Position.Y - previous.Predecessor.Position.Y, 2));
 					}
 					else
 						end = previous;
@@ -464,14 +471,20 @@ namespace BRRT
 			}
 
 			//Sort the list by the cost function of the given paths
-			List<RRTPath> SortedList = Paths.AsParallel().OrderBy(o => o.Cost()).ToList();
-			foreach (var item in SortedList)
+			Paths.Sort((RRTPath x, RRTPath y) => {
+				if (x.Cost() > y.Cost())
+					return 1;
+				else
+					return -1;
+			});
+			//List<RRTPath> SortedList = Paths.AsParallel().OrderBy(o => o.Cost()).ToList();
+			foreach (var item in Paths)
 			{
 				Console.WriteLine("Length for path " + item.Color.ToString() + " : " + item.Length + " Distance to End: " +item.DistanceToEnd + " OrientationDif: " + item.OrientationDeviation);
 			}
 
 
-			return SortedList;
+			return Paths;
 		}
 		/// <summary>
 		/// Prints the progress.
