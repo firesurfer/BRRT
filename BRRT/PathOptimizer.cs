@@ -220,12 +220,14 @@ namespace BRRT
 				double angle = RRTHelpers.CalculateAngle(start,end);
 
 				//We can't go from inverted to not inverted (not from forward to backwards or the other way round)
+				//NOTE Mit Kurvenfahrt ist das kein Problem, kann aber vermehrt zu Wendeschleifen führen
 				if (start.Inverted != end.Inverted)
 					continue;
 
 				//Now decide if going straight is way to go
 				//NOTE delta ist entweder sehr klein oder sehr groß (fast 360°, siehe Hilfsfunktion "anglesAreClose" in pseudocode)
-				if(AnglesAreClose(delta,0, AllowedOrientationDeviation)&&  Math.Abs(start.Orientation-angle*RRTHelpers.ToDegree) < MaximumDriftAngle)
+				//NOTE Im zweiten Check prüfe, ob Orientierung und Fahrtwinkel näher zusammenliegen als MaximumDriftAngle
+				if(AnglesAreClose(delta,0, AllowedOrientationDeviation) &&  (AnglesAreClose(start.Orientation, angle*RRTHelpers.ToDegree, MaximumDriftAngle))
 				//if (Math.Abs (delta) < AllowedOrientationDeviation*5 && Math.Abs(angle*RRTHelpers.ToDegree) < MaximumDriftAngle)
 				{
 					//The deviation in the orientation is small enough we can accept going straight (or drift)
