@@ -30,3 +30,13 @@ mono ../BRRT/bin/Debug/BRRT.exe MAP_roundedFreeForRobot.png 1000,1247,90 2310,89
 ```
 
 ![Path planning example](doc/ResultMap1.png)
+
+**Note** : the map been run through an algorithm that inflates the obstacles to consider the robot width. That means if the path cut a small part of an obstacle edge this will not result into a collision.
+
+# Tune the algorithm
+
+There are basically two points where you could tune the result:
+
+The first one is the constructor in the `RRT.cs`. The parameters are explained in the in file documention.
+
+The second one is the constructor in the `PathOptimizer.cs`.
