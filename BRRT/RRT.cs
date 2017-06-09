@@ -115,7 +115,7 @@ namespace BRRT
 		public RRT(Map _Map)
 		{
 			this.InternalMap = _Map;
-			this.Iterations = 100000;
+			this.Iterations = 150000;
 			this.MaximumDrift = 20;
 			this.StepWidth = 10;
 			this.CircleStepWidth = 7;

@@ -21,4 +21,12 @@ You need to pass:
 mono BRRT.ext InputFile.png x,y,orientation x,y,orientation Outputfile.png Path.xml
 ```
 
+# Example
 
+This is an example result of this call run on the `MAP_roundedFreeForRobot.png` in the tests folder.
+
+```
+mono ../BRRT/bin/Debug/BRRT.exe MAP_roundedFreeForRobot.png 1000,1247,90 2310,899,280 results/ResultMap$i.png  results/Path.xml
+```
+
+![Path planning example][doc/ResultMap1.png]
